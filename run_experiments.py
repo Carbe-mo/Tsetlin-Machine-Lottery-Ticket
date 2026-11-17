@@ -20,6 +20,7 @@ import argparse
 from concurrent.futures import ProcessPoolExecutor
 import csv
 import json
+import multiprocessing as mp
 import os
 from pathlib import Path
 import time
@@ -350,6 +351,7 @@ def main() -> None:
     executor = (
         ProcessPoolExecutor(
             max_workers=workers,
+            mp_context=mp.get_context("spawn"),
             initializer=_init_worker_data,
             initargs=(X_train, Y_train, X_val, Y_val, X_test, Y_test),
         )

@@ -1,0 +1,825 @@
+{
+  "config": {
+    "preset": "standard",
+    "dataset": "mnist",
+    "clauses": 2000,
+    "T": 1500,
+    "s": 5.0,
+    "epochs": 20,
+    "retrain_epochs": 5,
+    "rewind_epoch": 1,
+    "train_samples": 30000,
+    "val_samples": 5000,
+    "test_samples": 10000,
+    "platform": "CUDA",
+    "weighted": true,
+    "seed": 42,
+    "total_runtime_sec": 13340.96
+  },
+  "dense_training_history": [
+    {
+      "epoch": 1,
+      "val_accuracy": 93.56,
+      "test_accuracy": 94.0,
+      "time_sec": 23.08
+    },
+    {
+      "epoch": 2,
+      "val_accuracy": 95.3,
+      "test_accuracy": 95.11,
+      "time_sec": 19.61
+    },
+    {
+      "epoch": 3,
+      "val_accuracy": 95.86,
+      "test_accuracy": 95.55,
+      "time_sec": 19.25
+    },
+    {
+      "epoch": 4,
+      "val_accuracy": 96.08,
+      "test_accuracy": 95.96,
+      "time_sec": 18.92
+    },
+    {
+      "epoch": 5,
+      "val_accuracy": 96.66,
+      "test_accuracy": 96.36,
+      "time_sec": 19.42
+    },
+    {
+      "epoch": 6,
+      "val_accuracy": 96.42,
+      "test_accuracy": 96.48,
+      "time_sec": 20.17
+    },
+    {
+      "epoch": 7,
+      "val_accuracy": 96.84,
+      "test_accuracy": 96.52,
+      "time_sec": 18.29
+    },
+    {
+      "epoch": 8,
+      "val_accuracy": 97.22,
+      "test_accuracy": 96.84,
+      "time_sec": 18.5
+    },
+    {
+      "epoch": 9,
+      "val_accuracy": 97.04,
+      "test_accuracy": 96.78,
+      "time_sec": 18.3
+    },
+    {
+      "epoch": 10,
+      "val_accuracy": 97.16,
+      "test_accuracy": 96.9,
+      "time_sec": 18.27
+    },
+    {
+      "epoch": 11,
+      "val_accuracy": 97.28,
+      "test_accuracy": 96.75,
+      "time_sec": 18.2
+    },
+    {
+      "epoch": 12,
+      "val_accuracy": 97.44,
+      "test_accuracy": 97.01,
+      "time_sec": 18.05
+    },
+    {
+      "epoch": 13,
+      "val_accuracy": 97.18,
+      "test_accuracy": 97.02,
+      "time_sec": 18.09
+    },
+    {
+      "epoch": 14,
+      "val_accuracy": 96.92,
+      "test_accuracy": 97.17,
+      "time_sec": 18.59
+    },
+    {
+      "epoch": 15,
+      "val_accuracy": 97.26,
+      "test_accuracy": 97.28,
+      "time_sec": 18.08
+    },
+    {
+      "epoch": 16,
+      "val_accuracy": 97.4,
+      "test_accuracy": 97.25,
+      "time_sec": 18.02
+    },
+    {
+      "epoch": 17,
+      "val_accuracy": 97.2,
+      "test_accuracy": 97.23,
+      "time_sec": 17.86
+    },
+    {
+      "epoch": 18,
+      "val_accuracy": 97.32,
+      "test_accuracy": 97.18,
+      "time_sec": 17.9
+    },
+    {
+      "epoch": 19,
+      "val_accuracy": 97.48,
+      "test_accuracy": 97.35,
+      "time_sec": 17.85
+    },
+    {
+      "epoch": 20,
+      "val_accuracy": 97.28,
+      "test_accuracy": 97.25,
+      "time_sec": 18.13
+    }
+  ],
+  "disjoint_tickets": {
+    "dense_baseline": {
+      "total_clauses": 20000,
+      "model_size_kb": 3828.12,
+      "val_accuracy": 97.28,
+      "test_accuracy": 97.25,
+      "stage1_removed": {
+        "empty": 101,
+        "contradictory": 0,
+        "encoding_invalid": 0,
+        "duplicate": 85,
+        "subsumed": 0
+      },
+      "short_removed": 880
+    },
+    "ticket_ratio": 0.2,
+    "num_disjoint_tickets": 4,
+    "scoring_method": "mcs_hybrid",
+    "pairwise_jaccard_matrix": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "disjoint_tickets": [
+      {
+        "ticket_id": "Ticket #1",
+        "ticket_index": 1,
+        "retention_ratio": 0.2,
+        "active_clauses": 4000,
+        "active_clauses_per_class": {
+          "0": 400,
+          "1": 400,
+          "2": 400,
+          "3": 400,
+          "4": 400,
+          "5": 400,
+          "6": 400,
+          "7": 400,
+          "8": 400,
+          "9": 400
+        },
+        "model_size_kb": 765.62,
+        "compression_ratio": 5.0,
+        "mean_literal_length": 25.28,
+        "overlap_with_previous_tickets": 0,
+        "oneshot_val_acc": 93.58,
+        "oneshot_test_acc": 93.26,
+        "oneshot_renorm_val_acc": 93.68,
+        "oneshot_renorm_test_acc": 93.45,
+        "rewind_early_val_acc": 95.66,
+        "rewind_early_test_acc": 95.43,
+        "finetune_val_acc": 96.46,
+        "finetune_test_acc": 96.3,
+        "winning_ticket_val_acc": 96.46,
+        "winning_ticket_test_acc": 96.3,
+        "best_regime": "finetune",
+        "cumulative_ensemble_test_acc": 96.3
+      },
+      {
+        "ticket_id": "Ticket #2",
+        "ticket_index": 2,
+        "retention_ratio": 0.2,
+        "active_clauses": 4000,
+        "active_clauses_per_class": {
+          "0": 400,
+          "1": 400,
+          "2": 400,
+          "3": 400,
+          "4": 400,
+          "5": 400,
+          "6": 400,
+          "7": 400,
+          "8": 400,
+          "9": 400
+        },
+        "model_size_kb": 765.62,
+        "compression_ratio": 5.0,
+        "mean_literal_length": 23.41,
+        "overlap_with_previous_tickets": 0,
+        "oneshot_val_acc": 93.96,
+        "oneshot_test_acc": 93.93,
+        "oneshot_renorm_val_acc": 94.12,
+        "oneshot_renorm_test_acc": 93.68,
+        "rewind_early_val_acc": 95.8,
+        "rewind_early_test_acc": 95.49,
+        "finetune_val_acc": 96.12,
+        "finetune_test_acc": 96.16,
+        "winning_ticket_val_acc": 96.12,
+        "winning_ticket_test_acc": 96.16,
+        "best_regime": "finetune",
+        "cumulative_ensemble_test_acc": 96.9
+      },
+      {
+        "ticket_id": "Ticket #3",
+        "ticket_index": 3,
+        "retention_ratio": 0.2,
+        "active_clauses": 4000,
+        "active_clauses_per_class": {
+          "0": 400,
+          "1": 400,
+          "2": 400,
+          "3": 400,
+          "4": 400,
+          "5": 400,
+          "6": 400,
+          "7": 400,
+          "8": 400,
+          "9": 400
+        },
+        "model_size_kb": 765.62,
+        "compression_ratio": 5.0,
+        "mean_literal_length": 21.29,
+        "overlap_with_previous_tickets": 0,
+        "oneshot_val_acc": 82.7,
+        "oneshot_test_acc": 83.24,
+        "oneshot_renorm_val_acc": 83.98,
+        "oneshot_renorm_test_acc": 83.73,
+        "rewind_early_val_acc": 95.12,
+        "rewind_early_test_acc": 95.24,
+        "finetune_val_acc": 95.84,
+        "finetune_test_acc": 95.91,
+        "winning_ticket_val_acc": 95.84,
+        "winning_ticket_test_acc": 95.91,
+        "best_regime": "finetune",
+        "cumulative_ensemble_test_acc": 97.01
+      },
+      {
+        "ticket_id": "Ticket #4",
+        "ticket_index": 4,
+        "retention_ratio": 0.2,
+        "active_clauses": 4000,
+        "active_clauses_per_class": {
+          "0": 400,
+          "1": 400,
+          "2": 400,
+          "3": 400,
+          "4": 400,
+          "5": 400,
+          "6": 400,
+          "7": 400,
+          "8": 400,
+          "9": 400
+        },
+        "model_size_kb": 765.62,
+        "compression_ratio": 5.0,
+        "mean_literal_length": 19.75,
+        "overlap_with_previous_tickets": 0,
+        "oneshot_val_acc": 24.7,
+        "oneshot_test_acc": 24.84,
+        "oneshot_renorm_val_acc": 25.18,
+        "oneshot_renorm_test_acc": 25.89,
+        "rewind_early_val_acc": 95.48,
+        "rewind_early_test_acc": 95.51,
+        "finetune_val_acc": 95.68,
+        "finetune_test_acc": 95.54,
+        "winning_ticket_val_acc": 95.68,
+        "winning_ticket_test_acc": 95.54,
+        "best_regime": "finetune",
+        "cumulative_ensemble_test_acc": 97.14
+      }
+    ]
+  },
+  "iterative_lottery": {
+    "dense_baseline": {
+      "total_clauses": 20000,
+      "model_size_kb": 3828.12,
+      "val_accuracy": 97.28,
+      "test_accuracy": 97.25,
+      "stage1_removed": {
+        "empty": 101,
+        "contradictory": 0,
+        "encoding_invalid": 0,
+        "duplicate": 85,
+        "subsumed": 0
+      },
+      "short_removed": 880
+    },
+    "scoring_method": "mcs_hybrid",
+    "iterative_tickets": [
+      {
+        "round": 0,
+        "target_ratio": 1.0,
+        "actual_retention_ratio": 0.6463,
+        "active_clauses": 12926,
+        "model_size_kb": 2474.12,
+        "mean_literal_length": 22.09,
+        "oneshot_val_acc": 84.08,
+        "oneshot_test_acc": 83.47,
+        "oneshot_renorm_test_acc": 80.56,
+        "rewind_early_test_acc": 83.47,
+        "rewind_init_test_acc": 97.25,
+        "finetune_test_acc": 83.47,
+        "random_reinit_test_acc": 97.25,
+        "random_mask_retrain_test_acc": 97.25,
+        "scratch_small_test_acc": 97.25,
+        "winning_ticket_test_acc": 83.47
+      },
+      {
+        "round": 1,
+        "target_ratio": 0.75,
+        "actual_retention_ratio": 0.7465,
+        "active_clauses": 14930,
+        "model_size_kb": 2857.7,
+        "mean_literal_length": 22.54,
+        "oneshot_val_acc": 96.78,
+        "oneshot_test_acc": 96.51,
+        "oneshot_renorm_test_acc": 96.66,
+        "rewind_early_test_acc": 96.64,
+        "rewind_init_test_acc": 96.29,
+        "finetune_test_acc": 97.51,
+        "random_reinit_test_acc": 96.42,
+        "random_mask_retrain_test_acc": 96.47,
+        "scratch_small_test_acc": 96.24,
+        "winning_ticket_test_acc": 97.51
+      },
+      {
+        "round": 2,
+        "target_ratio": 0.5,
+        "actual_retention_ratio": 0.4862,
+        "active_clauses": 9723,
+        "model_size_kb": 1861.04,
+        "mean_literal_length": 23.89,
+        "oneshot_val_acc": 95.24,
+        "oneshot_test_acc": 95.05,
+        "oneshot_renorm_test_acc": 95.09,
+        "rewind_early_test_acc": 96.38,
+        "rewind_init_test_acc": 95.57,
+        "finetune_test_acc": 96.96,
+        "random_reinit_test_acc": 96.04,
+        "random_mask_retrain_test_acc": 96.32,
+        "scratch_small_test_acc": 96.17,
+        "winning_ticket_test_acc": 96.96
+      },
+      {
+        "round": 3,
+        "target_ratio": 0.35,
+        "actual_retention_ratio": 0.3377,
+        "active_clauses": 6753,
+        "model_size_kb": 1292.57,
+        "mean_literal_length": 25.81,
+        "oneshot_val_acc": 94.92,
+        "oneshot_test_acc": 94.75,
+        "oneshot_renorm_test_acc": 94.76,
+        "rewind_early_test_acc": 95.78,
+        "rewind_init_test_acc": 95.49,
+        "finetune_test_acc": 96.86,
+        "random_reinit_test_acc": 95.83,
+        "random_mask_retrain_test_acc": 95.83,
+        "scratch_small_test_acc": 95.47,
+        "winning_ticket_test_acc": 96.86
+      },
+      {
+        "round": 4,
+        "target_ratio": 0.25,
+        "actual_retention_ratio": 0.2414,
+        "active_clauses": 4827,
+        "model_size_kb": 923.92,
+        "mean_literal_length": 27.29,
+        "oneshot_val_acc": 94.52,
+        "oneshot_test_acc": 94.58,
+        "oneshot_renorm_test_acc": 94.52,
+        "rewind_early_test_acc": 95.65,
+        "rewind_init_test_acc": 94.97,
+        "finetune_test_acc": 96.59,
+        "random_reinit_test_acc": 95.76,
+        "random_mask_retrain_test_acc": 95.24,
+        "scratch_small_test_acc": 95.2,
+        "winning_ticket_test_acc": 96.59
+      },
+      {
+        "round": 5,
+        "target_ratio": 0.15,
+        "actual_retention_ratio": 0.1454,
+        "active_clauses": 2909,
+        "model_size_kb": 556.8,
+        "mean_literal_length": 29.4,
+        "oneshot_val_acc": 94.52,
+        "oneshot_test_acc": 94.47,
+        "oneshot_renorm_test_acc": 94.48,
+        "rewind_early_test_acc": 95.17,
+        "rewind_init_test_acc": 94.53,
+        "finetune_test_acc": 96.11,
+        "random_reinit_test_acc": 94.62,
+        "random_mask_retrain_test_acc": 95.37,
+        "scratch_small_test_acc": 95.09,
+        "winning_ticket_test_acc": 96.11
+      },
+      {
+        "round": 6,
+        "target_ratio": 0.1,
+        "actual_retention_ratio": 0.0967,
+        "active_clauses": 1934,
+        "model_size_kb": 370.18,
+        "mean_literal_length": 30.97,
+        "oneshot_val_acc": 94.34,
+        "oneshot_test_acc": 94.15,
+        "oneshot_renorm_test_acc": 94.12,
+        "rewind_early_test_acc": 94.52,
+        "rewind_init_test_acc": 94.06,
+        "finetune_test_acc": 95.65,
+        "random_reinit_test_acc": 93.65,
+        "random_mask_retrain_test_acc": 93.93,
+        "scratch_small_test_acc": 94.19,
+        "winning_ticket_test_acc": 95.65
+      }
+    ]
+  },
+  "method_comparison": {
+    "method_comparison": [
+      {
+        "budget_ratio": 0.5,
+        "method": "TM-Ticket (MCS-Hybrid + C1 + C3)",
+        "active_clauses": 9909,
+        "model_size_kb": 1896.64,
+        "mean_literal_length": 23.76,
+        "oneshot_raw_test_acc": 94.71,
+        "oneshot_renorm_test_acc": 94.77,
+        "oneshot_best_test_acc": 94.77,
+        "lottery_ticket_retrain_test_acc": 96.6
+      },
+      {
+        "budget_ratio": 0.5,
+        "method": "MCS-Boundary (Pure Margin Score)",
+        "active_clauses": 9117,
+        "model_size_kb": 1745.05,
+        "mean_literal_length": 24.08,
+        "oneshot_raw_test_acc": 88.8,
+        "oneshot_renorm_test_acc": 86.7,
+        "oneshot_best_test_acc": 86.7,
+        "lottery_ticket_retrain_test_acc": 95.84
+      },
+      {
+        "budget_ratio": 0.5,
+        "method": "Discriminative-Margin (w*[rho+ - rho-])",
+        "active_clauses": 9913,
+        "model_size_kb": 1897.41,
+        "mean_literal_length": 23.73,
+        "oneshot_raw_test_acc": 94.7,
+        "oneshot_renorm_test_acc": 94.74,
+        "oneshot_best_test_acc": 94.74,
+        "lottery_ticket_retrain_test_acc": 96.44
+      },
+      {
+        "budget_ratio": 0.5,
+        "method": "Vote-Impact (|w|*rho)",
+        "active_clauses": 10000,
+        "model_size_kb": 1914.06,
+        "mean_literal_length": 24.56,
+        "oneshot_raw_test_acc": 96.47,
+        "oneshot_renorm_test_acc": 96.51,
+        "oneshot_best_test_acc": 96.51,
+        "lottery_ticket_retrain_test_acc": 96.24
+      },
+      {
+        "budget_ratio": 0.5,
+        "method": "Paper Stage 1+3 (Firing Rate, Global)",
+        "active_clauses": 10000,
+        "model_size_kb": 1914.06,
+        "mean_literal_length": 21.68,
+        "oneshot_raw_test_acc": 94.14,
+        "oneshot_renorm_test_acc": 94.36,
+        "oneshot_best_test_acc": 94.14,
+        "lottery_ticket_retrain_test_acc": 96.39
+      },
+      {
+        "budget_ratio": 0.5,
+        "method": "Paper Stage 1+2+3 (L_min=2 + Firing)",
+        "active_clauses": 10000,
+        "model_size_kb": 1914.06,
+        "mean_literal_length": 22.62,
+        "oneshot_raw_test_acc": 94.35,
+        "oneshot_renorm_test_acc": 94.67,
+        "oneshot_best_test_acc": 94.35,
+        "lottery_ticket_retrain_test_acc": 96.0
+      },
+      {
+        "budget_ratio": 0.5,
+        "method": "Weight-Magnitude (|w|)",
+        "active_clauses": 10000,
+        "model_size_kb": 1914.06,
+        "mean_literal_length": 26.81,
+        "oneshot_raw_test_acc": 97.18,
+        "oneshot_renorm_test_acc": 97.23,
+        "oneshot_best_test_acc": 97.23,
+        "lottery_ticket_retrain_test_acc": 96.24
+      },
+      {
+        "budget_ratio": 0.5,
+        "method": "Random-Pruning (Baseline)",
+        "active_clauses": 10000,
+        "model_size_kb": 1914.06,
+        "mean_literal_length": 22.15,
+        "oneshot_raw_test_acc": 96.92,
+        "oneshot_renorm_test_acc": 96.89,
+        "oneshot_best_test_acc": 96.89,
+        "lottery_ticket_retrain_test_acc": 96.39
+      },
+      {
+        "budget_ratio": 0.3,
+        "method": "TM-Ticket (MCS-Hybrid + C1 + C3)",
+        "active_clauses": 6000,
+        "model_size_kb": 1148.44,
+        "mean_literal_length": 24.65,
+        "oneshot_raw_test_acc": 93.86,
+        "oneshot_renorm_test_acc": 94.06,
+        "oneshot_best_test_acc": 94.06,
+        "lottery_ticket_retrain_test_acc": 95.69
+      },
+      {
+        "budget_ratio": 0.3,
+        "method": "MCS-Boundary (Pure Margin Score)",
+        "active_clauses": 5840,
+        "model_size_kb": 1117.81,
+        "mean_literal_length": 24.54,
+        "oneshot_raw_test_acc": 90.7,
+        "oneshot_renorm_test_acc": 89.77,
+        "oneshot_best_test_acc": 89.77,
+        "lottery_ticket_retrain_test_acc": 95.87
+      },
+      {
+        "budget_ratio": 0.3,
+        "method": "Discriminative-Margin (w*[rho+ - rho-])",
+        "active_clauses": 6000,
+        "model_size_kb": 1148.44,
+        "mean_literal_length": 24.64,
+        "oneshot_raw_test_acc": 93.75,
+        "oneshot_renorm_test_acc": 93.97,
+        "oneshot_best_test_acc": 93.97,
+        "lottery_ticket_retrain_test_acc": 95.82
+      },
+      {
+        "budget_ratio": 0.3,
+        "method": "Vote-Impact (|w|*rho)",
+        "active_clauses": 6000,
+        "model_size_kb": 1148.44,
+        "mean_literal_length": 25.07,
+        "oneshot_raw_test_acc": 95.26,
+        "oneshot_renorm_test_acc": 95.35,
+        "oneshot_best_test_acc": 95.35,
+        "lottery_ticket_retrain_test_acc": 95.96
+      },
+      {
+        "budget_ratio": 0.3,
+        "method": "Paper Stage 1+3 (Firing Rate, Global)",
+        "active_clauses": 6000,
+        "model_size_kb": 1148.44,
+        "mean_literal_length": 21.75,
+        "oneshot_raw_test_acc": 90.95,
+        "oneshot_renorm_test_acc": 91.3,
+        "oneshot_best_test_acc": 90.95,
+        "lottery_ticket_retrain_test_acc": 95.91
+      },
+      {
+        "budget_ratio": 0.3,
+        "method": "Paper Stage 1+2+3 (L_min=2 + Firing)",
+        "active_clauses": 6000,
+        "model_size_kb": 1148.44,
+        "mean_literal_length": 22.88,
+        "oneshot_raw_test_acc": 91.24,
+        "oneshot_renorm_test_acc": 91.55,
+        "oneshot_best_test_acc": 91.24,
+        "lottery_ticket_retrain_test_acc": 95.67
+      },
+      {
+        "budget_ratio": 0.3,
+        "method": "Weight-Magnitude (|w|)",
+        "active_clauses": 6000,
+        "model_size_kb": 1148.44,
+        "mean_literal_length": 29.19,
+        "oneshot_raw_test_acc": 96.57,
+        "oneshot_renorm_test_acc": 96.7,
+        "oneshot_best_test_acc": 96.7,
+        "lottery_ticket_retrain_test_acc": 95.92
+      },
+      {
+        "budget_ratio": 0.3,
+        "method": "Random-Pruning (Baseline)",
+        "active_clauses": 6000,
+        "model_size_kb": 1148.44,
+        "mean_literal_length": 22.41,
+        "oneshot_raw_test_acc": 95.81,
+        "oneshot_renorm_test_acc": 95.82,
+        "oneshot_best_test_acc": 95.82,
+        "lottery_ticket_retrain_test_acc": 96.0
+      },
+      {
+        "budget_ratio": 0.2,
+        "method": "TM-Ticket (MCS-Hybrid + C1 + C3)",
+        "active_clauses": 4000,
+        "model_size_kb": 765.62,
+        "mean_literal_length": 25.28,
+        "oneshot_raw_test_acc": 93.26,
+        "oneshot_renorm_test_acc": 93.45,
+        "oneshot_best_test_acc": 93.45,
+        "lottery_ticket_retrain_test_acc": 95.45
+      },
+      {
+        "budget_ratio": 0.2,
+        "method": "MCS-Boundary (Pure Margin Score)",
+        "active_clauses": 4000,
+        "model_size_kb": 765.62,
+        "mean_literal_length": 24.96,
+        "oneshot_raw_test_acc": 91.09,
+        "oneshot_renorm_test_acc": 90.66,
+        "oneshot_best_test_acc": 90.66,
+        "lottery_ticket_retrain_test_acc": 95.43
+      },
+      {
+        "budget_ratio": 0.2,
+        "method": "Discriminative-Margin (w*[rho+ - rho-])",
+        "active_clauses": 4000,
+        "model_size_kb": 765.62,
+        "mean_literal_length": 25.23,
+        "oneshot_raw_test_acc": 93.28,
+        "oneshot_renorm_test_acc": 93.47,
+        "oneshot_best_test_acc": 93.47,
+        "lottery_ticket_retrain_test_acc": 95.6
+      },
+      {
+        "budget_ratio": 0.2,
+        "method": "Vote-Impact (|w|*rho)",
+        "active_clauses": 4000,
+        "model_size_kb": 765.62,
+        "mean_literal_length": 25.31,
+        "oneshot_raw_test_acc": 94.26,
+        "oneshot_renorm_test_acc": 94.39,
+        "oneshot_best_test_acc": 94.39,
+        "lottery_ticket_retrain_test_acc": 95.27
+      },
+      {
+        "budget_ratio": 0.2,
+        "method": "Paper Stage 1+3 (Firing Rate, Global)",
+        "active_clauses": 4000,
+        "model_size_kb": 765.62,
+        "mean_literal_length": 21.69,
+        "oneshot_raw_test_acc": 88.86,
+        "oneshot_renorm_test_acc": 88.9,
+        "oneshot_best_test_acc": 88.86,
+        "lottery_ticket_retrain_test_acc": 94.69
+      },
+      {
+        "budget_ratio": 0.2,
+        "method": "Paper Stage 1+2+3 (L_min=2 + Firing)",
+        "active_clauses": 4000,
+        "model_size_kb": 765.62,
+        "mean_literal_length": 22.81,
+        "oneshot_raw_test_acc": 89.02,
+        "oneshot_renorm_test_acc": 89.3,
+        "oneshot_best_test_acc": 89.02,
+        "lottery_ticket_retrain_test_acc": 95.32
+      },
+      {
+        "budget_ratio": 0.2,
+        "method": "Weight-Magnitude (|w|)",
+        "active_clauses": 4000,
+        "model_size_kb": 765.62,
+        "mean_literal_length": 31.0,
+        "oneshot_raw_test_acc": 95.48,
+        "oneshot_renorm_test_acc": 95.68,
+        "oneshot_best_test_acc": 95.68,
+        "lottery_ticket_retrain_test_acc": 95.5
+      },
+      {
+        "budget_ratio": 0.2,
+        "method": "Random-Pruning (Baseline)",
+        "active_clauses": 4000,
+        "model_size_kb": 765.62,
+        "mean_literal_length": 22.42,
+        "oneshot_raw_test_acc": 93.93,
+        "oneshot_renorm_test_acc": 93.97,
+        "oneshot_best_test_acc": 93.97,
+        "lottery_ticket_retrain_test_acc": 95.32
+      },
+      {
+        "budget_ratio": 0.1,
+        "method": "TM-Ticket (MCS-Hybrid + C1 + C3)",
+        "active_clauses": 2000,
+        "model_size_kb": 382.81,
+        "mean_literal_length": 25.89,
+        "oneshot_raw_test_acc": 91.83,
+        "oneshot_renorm_test_acc": 92.18,
+        "oneshot_best_test_acc": 92.18,
+        "lottery_ticket_retrain_test_acc": 94.47
+      },
+      {
+        "budget_ratio": 0.1,
+        "method": "MCS-Boundary (Pure Margin Score)",
+        "active_clauses": 2000,
+        "model_size_kb": 382.81,
+        "mean_literal_length": 25.94,
+        "oneshot_raw_test_acc": 90.42,
+        "oneshot_renorm_test_acc": 90.07,
+        "oneshot_best_test_acc": 90.07,
+        "lottery_ticket_retrain_test_acc": 95.18
+      },
+      {
+        "budget_ratio": 0.1,
+        "method": "Discriminative-Margin (w*[rho+ - rho-])",
+        "active_clauses": 2000,
+        "model_size_kb": 382.81,
+        "mean_literal_length": 25.83,
+        "oneshot_raw_test_acc": 91.7,
+        "oneshot_renorm_test_acc": 92.09,
+        "oneshot_best_test_acc": 92.09,
+        "lottery_ticket_retrain_test_acc": 94.45
+      },
+      {
+        "budget_ratio": 0.1,
+        "method": "Vote-Impact (|w|*rho)",
+        "active_clauses": 2000,
+        "model_size_kb": 382.81,
+        "mean_literal_length": 25.53,
+        "oneshot_raw_test_acc": 91.61,
+        "oneshot_renorm_test_acc": 92.2,
+        "oneshot_best_test_acc": 92.2,
+        "lottery_ticket_retrain_test_acc": 95.1
+      },
+      {
+        "budget_ratio": 0.1,
+        "method": "Paper Stage 1+3 (Firing Rate, Global)",
+        "active_clauses": 2000,
+        "model_size_kb": 382.81,
+        "mean_literal_length": 20.62,
+        "oneshot_raw_test_acc": 82.47,
+        "oneshot_renorm_test_acc": 82.52,
+        "oneshot_best_test_acc": 82.47,
+        "lottery_ticket_retrain_test_acc": 93.44
+      },
+      {
+        "budget_ratio": 0.1,
+        "method": "Paper Stage 1+2+3 (L_min=2 + Firing)",
+        "active_clauses": 2000,
+        "model_size_kb": 382.81,
+        "mean_literal_length": 22.18,
+        "oneshot_raw_test_acc": 83.99,
+        "oneshot_renorm_test_acc": 83.43,
+        "oneshot_best_test_acc": 83.99,
+        "lottery_ticket_retrain_test_acc": 93.72
+      },
+      {
+        "budget_ratio": 0.1,
+        "method": "Weight-Magnitude (|w|)",
+        "active_clauses": 2000,
+        "model_size_kb": 382.81,
+        "mean_literal_length": 32.87,
+        "oneshot_raw_test_acc": 90.62,
+        "oneshot_renorm_test_acc": 91.03,
+        "oneshot_best_test_acc": 91.03,
+        "lottery_ticket_retrain_test_acc": 94.33
+      },
+      {
+        "budget_ratio": 0.1,
+        "method": "Random-Pruning (Baseline)",
+        "active_clauses": 2000,
+        "model_size_kb": 382.81,
+        "mean_literal_length": 22.44,
+        "oneshot_raw_test_acc": 86.68,
+        "oneshot_renorm_test_acc": 87.51,
+        "oneshot_best_test_acc": 87.51,
+        "lottery_ticket_retrain_test_acc": 94.29
+      }
+    ]
+  }
+}

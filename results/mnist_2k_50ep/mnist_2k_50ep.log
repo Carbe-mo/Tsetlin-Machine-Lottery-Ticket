@@ -1,0 +1,169 @@
+2026-11-17 17:55:35,247 - matplotlib - DEBUG - matplotlib data path: /home/coder/.local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-11-17 17:55:35,255 - matplotlib - DEBUG - CONFIGDIR=/home/coder/.config/matplotlib
+2026-11-17 17:55:35,256 - matplotlib - DEBUG - interactive is False
+2026-11-17 17:55:35,256 - matplotlib - DEBUG - platform is linux
+2026-11-17 17:55:35,311 - matplotlib - DEBUG - CACHEDIR=/home/coder/.cache/matplotlib
+2026-11-17 17:55:35,314 - matplotlib.font_manager - DEBUG - Using fontManager instance from /home/coder/.cache/matplotlib/fontlist-v3.11.0.json
+==============================================================================
+TM-Ticket Experiment Suite | Preset: FULL | Dataset: MNIST
+Clauses/class: 2000 (Total: 20000) | T=1500 | s=5.0 | Epochs=50 (Rewind e_r=1, Retrain=50) | Platform=CUDA | Parallel Workers=16
+==============================================================================
+Loaded MNIST: Train=(50000, 784), Val=(10000, 784), Test=(10000, 784)
+2026-11-17 17:55:37,128 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/3201a5ec836dac638412a932dacde82d83e549ad.ptx'.
+2026-11-17 17:55:37,130 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/89016a311bdbf3c0a8b45a95c9a4083dcbd88f19.ptx'.
+2026-11-17 17:55:37,131 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/339c1aa30de39fac8aa528e545297542c8ed6031.ptx'.
+2026-11-17 17:55:37,132 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/d0add23ba02c3e6bf425e1e0f990c8c3b35e0030.ptx'.
+2026-11-17 17:55:37,133 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/f71fb0670b8df2a0be62e147eaca127f46a1d7dd.ptx'.
+2026-11-17 17:55:37,583 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/3201a5ec836dac638412a932dacde82d83e549ad.ptx'.
+2026-11-17 17:55:37,585 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/89016a311bdbf3c0a8b45a95c9a4083dcbd88f19.ptx'.
+2026-11-17 17:55:37,586 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/339c1aa30de39fac8aa528e545297542c8ed6031.ptx'.
+2026-11-17 17:55:37,587 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/d0add23ba02c3e6bf425e1e0f990c8c3b35e0030.ptx'.
+2026-11-17 17:55:37,588 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/f71fb0670b8df2a0be62e147eaca127f46a1d7dd.ptx'.
+2026-11-17 17:55:38,030 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/3201a5ec836dac638412a932dacde82d83e549ad.ptx'.
+2026-11-17 17:55:38,032 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/89016a311bdbf3c0a8b45a95c9a4083dcbd88f19.ptx'.
+2026-11-17 17:55:38,033 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/339c1aa30de39fac8aa528e545297542c8ed6031.ptx'.
+2026-11-17 17:55:38,034 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/d0add23ba02c3e6bf425e1e0f990c8c3b35e0030.ptx'.
+2026-11-17 17:55:38,035 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/f71fb0670b8df2a0be62e147eaca127f46a1d7dd.ptx'.
+2026-11-17 17:55:38,475 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/3201a5ec836dac638412a932dacde82d83e549ad.ptx'.
+2026-11-17 17:55:38,477 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/89016a311bdbf3c0a8b45a95c9a4083dcbd88f19.ptx'.
+2026-11-17 17:55:38,478 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/339c1aa30de39fac8aa528e545297542c8ed6031.ptx'.
+2026-11-17 17:55:38,479 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/d0add23ba02c3e6bf425e1e0f990c8c3b35e0030.ptx'.
+2026-11-17 17:55:38,480 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/f71fb0670b8df2a0be62e147eaca127f46a1d7dd.ptx'.
+2026-11-17 17:55:38,948 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/3201a5ec836dac638412a932dacde82d83e549ad.ptx'.
+2026-11-17 17:55:38,949 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/89016a311bdbf3c0a8b45a95c9a4083dcbd88f19.ptx'.
+2026-11-17 17:55:38,950 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/339c1aa30de39fac8aa528e545297542c8ed6031.ptx'.
+2026-11-17 17:55:38,951 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/d0add23ba02c3e6bf425e1e0f990c8c3b35e0030.ptx'.
+2026-11-17 17:55:38,953 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/f71fb0670b8df2a0be62e147eaca127f46a1d7dd.ptx'.
+2026-11-17 17:55:39,396 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/3201a5ec836dac638412a932dacde82d83e549ad.ptx'.
+2026-11-17 17:55:39,398 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/89016a311bdbf3c0a8b45a95c9a4083dcbd88f19.ptx'.
+2026-11-17 17:55:39,399 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/339c1aa30de39fac8aa528e545297542c8ed6031.ptx'.
+2026-11-17 17:55:39,400 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/d0add23ba02c3e6bf425e1e0f990c8c3b35e0030.ptx'.
+2026-11-17 17:55:39,401 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/f71fb0670b8df2a0be62e147eaca127f46a1d7dd.ptx'.
+2026-11-17 17:55:39,858 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/3201a5ec836dac638412a932dacde82d83e549ad.ptx'.
+2026-11-17 17:55:39,859 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/89016a311bdbf3c0a8b45a95c9a4083dcbd88f19.ptx'.
+2026-11-17 17:55:39,860 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/339c1aa30de39fac8aa528e545297542c8ed6031.ptx'.
+2026-11-17 17:55:39,862 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/d0add23ba02c3e6bf425e1e0f990c8c3b35e0030.ptx'.
+2026-11-17 17:55:39,863 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/f71fb0670b8df2a0be62e147eaca127f46a1d7dd.ptx'.
+2026-11-17 17:55:40,300 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/3201a5ec836dac638412a932dacde82d83e549ad.ptx'.
+2026-11-17 17:55:40,302 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/89016a311bdbf3c0a8b45a95c9a4083dcbd88f19.ptx'.
+2026-11-17 17:55:40,303 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/339c1aa30de39fac8aa528e545297542c8ed6031.ptx'.
+2026-11-17 17:55:40,304 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/d0add23ba02c3e6bf425e1e0f990c8c3b35e0030.ptx'.
+2026-11-17 17:55:40,305 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/f71fb0670b8df2a0be62e147eaca127f46a1d7dd.ptx'.
+2026-11-17 17:55:40,747 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/3201a5ec836dac638412a932dacde82d83e549ad.ptx'.
+2026-11-17 17:55:40,749 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/89016a311bdbf3c0a8b45a95c9a4083dcbd88f19.ptx'.
+2026-11-17 17:55:40,750 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/339c1aa30de39fac8aa528e545297542c8ed6031.ptx'.
+2026-11-17 17:55:40,751 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/d0add23ba02c3e6bf425e1e0f990c8c3b35e0030.ptx'.
+2026-11-17 17:55:40,752 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/f71fb0670b8df2a0be62e147eaca127f46a1d7dd.ptx'.
+2026-11-17 17:55:41,186 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/3201a5ec836dac638412a932dacde82d83e549ad.ptx'.
+2026-11-17 17:55:41,188 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/89016a311bdbf3c0a8b45a95c9a4083dcbd88f19.ptx'.
+2026-11-17 17:55:41,189 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/339c1aa30de39fac8aa528e545297542c8ed6031.ptx'.
+2026-11-17 17:55:41,190 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/d0add23ba02c3e6bf425e1e0f990c8c3b35e0030.ptx'.
+2026-11-17 17:55:41,191 - tmu.clause_bank.clause_bank_cuda - INFO - Loading compiled CUDA module from '/tmp/tm_kernels/f71fb0670b8df2a0be62e147eaca127f46a1d7dd.ptx'.
+  [Dense Train] Epoch 01/50 | Val Acc: 94.88% | Test Acc: 95.41% | Time: 34.76s
+  [Dense Train] Epoch 02/50 | Val Acc: 95.73% | Test Acc: 95.96% | Time: 31.06s
+  [Dense Train] Epoch 03/50 | Val Acc: 96.17% | Test Acc: 96.54% | Time: 30.36s
+  [Dense Train] Epoch 04/50 | Val Acc: 96.48% | Test Acc: 96.80% | Time: 29.92s
+  [Dense Train] Epoch 05/50 | Val Acc: 96.82% | Test Acc: 96.91% | Time: 29.75s
+  [Dense Train] Epoch 06/50 | Val Acc: 96.83% | Test Acc: 97.26% | Time: 29.61s
+  [Dense Train] Epoch 07/50 | Val Acc: 97.20% | Test Acc: 97.35% | Time: 29.35s
+  [Dense Train] Epoch 08/50 | Val Acc: 97.27% | Test Acc: 97.39% | Time: 29.30s
+  [Dense Train] Epoch 09/50 | Val Acc: 97.21% | Test Acc: 97.24% | Time: 29.24s
+  [Dense Train] Epoch 10/50 | Val Acc: 97.47% | Test Acc: 97.45% | Time: 31.26s
+  [Dense Train] Epoch 11/50 | Val Acc: 97.41% | Test Acc: 97.42% | Time: 29.65s
+  [Dense Train] Epoch 12/50 | Val Acc: 97.41% | Test Acc: 97.50% | Time: 29.57s
+  [Dense Train] Epoch 13/50 | Val Acc: 97.47% | Test Acc: 97.60% | Time: 29.67s
+  [Dense Train] Epoch 14/50 | Val Acc: 97.43% | Test Acc: 97.41% | Time: 29.20s
+  [Dense Train] Epoch 15/50 | Val Acc: 97.54% | Test Acc: 97.56% | Time: 29.59s
+  [Dense Train] Epoch 16/50 | Val Acc: 97.40% | Test Acc: 97.62% | Time: 29.32s
+  [Dense Train] Epoch 17/50 | Val Acc: 97.52% | Test Acc: 97.55% | Time: 29.41s
+  [Dense Train] Epoch 18/50 | Val Acc: 97.53% | Test Acc: 97.65% | Time: 29.42s
+  [Dense Train] Epoch 19/50 | Val Acc: 97.55% | Test Acc: 97.67% | Time: 29.74s
+  [Dense Train] Epoch 20/50 | Val Acc: 97.48% | Test Acc: 97.76% | Time: 29.22s
+  [Dense Train] Epoch 21/50 | Val Acc: 97.56% | Test Acc: 97.60% | Time: 29.17s
+  [Dense Train] Epoch 22/50 | Val Acc: 97.66% | Test Acc: 97.75% | Time: 29.03s
+  [Dense Train] Epoch 23/50 | Val Acc: 97.71% | Test Acc: 97.77% | Time: 29.00s
+  [Dense Train] Epoch 24/50 | Val Acc: 97.57% | Test Acc: 97.85% | Time: 28.84s
+  [Dense Train] Epoch 25/50 | Val Acc: 97.43% | Test Acc: 97.74% | Time: 29.26s
+  [Dense Train] Epoch 26/50 | Val Acc: 97.51% | Test Acc: 97.73% | Time: 29.14s
+  [Dense Train] Epoch 27/50 | Val Acc: 97.56% | Test Acc: 97.73% | Time: 29.16s
+  [Dense Train] Epoch 28/50 | Val Acc: 97.56% | Test Acc: 97.79% | Time: 29.14s
+  [Dense Train] Epoch 29/50 | Val Acc: 97.63% | Test Acc: 97.78% | Time: 29.05s
+  [Dense Train] Epoch 30/50 | Val Acc: 97.71% | Test Acc: 97.73% | Time: 29.17s
+  [Dense Train] Epoch 31/50 | Val Acc: 97.59% | Test Acc: 97.84% | Time: 28.75s
+  [Dense Train] Epoch 32/50 | Val Acc: 97.70% | Test Acc: 97.75% | Time: 28.99s
+  [Dense Train] Epoch 33/50 | Val Acc: 97.60% | Test Acc: 97.66% | Time: 29.05s
+  [Dense Train] Epoch 34/50 | Val Acc: 97.53% | Test Acc: 97.95% | Time: 28.88s
+  [Dense Train] Epoch 35/50 | Val Acc: 97.57% | Test Acc: 97.75% | Time: 29.07s
+  [Dense Train] Epoch 36/50 | Val Acc: 97.72% | Test Acc: 97.57% | Time: 28.76s
+  [Dense Train] Epoch 37/50 | Val Acc: 97.76% | Test Acc: 97.79% | Time: 28.72s
+  [Dense Train] Epoch 38/50 | Val Acc: 97.66% | Test Acc: 97.76% | Time: 28.89s
+  [Dense Train] Epoch 39/50 | Val Acc: 97.59% | Test Acc: 97.73% | Time: 28.77s
+  [Dense Train] Epoch 40/50 | Val Acc: 97.85% | Test Acc: 97.79% | Time: 29.07s
+  [Dense Train] Epoch 41/50 | Val Acc: 97.75% | Test Acc: 97.83% | Time: 28.77s
+  [Dense Train] Epoch 42/50 | Val Acc: 97.72% | Test Acc: 97.96% | Time: 29.04s
+  [Dense Train] Epoch 43/50 | Val Acc: 97.73% | Test Acc: 97.93% | Time: 28.97s
+  [Dense Train] Epoch 44/50 | Val Acc: 97.76% | Test Acc: 97.81% | Time: 29.18s
+  [Dense Train] Epoch 45/50 | Val Acc: 97.75% | Test Acc: 97.89% | Time: 28.74s
+  [Dense Train] Epoch 46/50 | Val Acc: 97.74% | Test Acc: 97.79% | Time: 29.13s
+  [Dense Train] Epoch 47/50 | Val Acc: 97.68% | Test Acc: 97.88% | Time: 28.76s
+  [Dense Train] Epoch 48/50 | Val Acc: 97.71% | Test Acc: 97.84% | Time: 28.93s
+  [Dense Train] Epoch 49/50 | Val Acc: 97.80% | Test Acc: 97.80% | Time: 28.98s
+  [Dense Train] Epoch 50/50 | Val Acc: 97.70% | Test Acc: 97.77% | Time: 28.77s
+
+=== Discovering 4 Mutually Disjoint Winning Tickets (each 20% of bank, Retrain=50 epochs) ===
+2026-11-17 18:33:44,844 - matplotlib - DEBUG - matplotlib data path: /home/coder/.local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-11-17 18:33:44,848 - matplotlib - DEBUG - CONFIGDIR=/home/coder/.config/matplotlib
+2026-11-17 18:33:44,849 - matplotlib - DEBUG - interactive is False
+2026-11-17 18:33:44,849 - matplotlib - DEBUG - platform is linux
+2026-11-17 18:33:44,873 - matplotlib - DEBUG - CACHEDIR=/home/coder/.cache/matplotlib
+2026-11-17 18:33:44,874 - matplotlib.font_manager - DEBUG - Using fontManager instance from /home/coder/.cache/matplotlib/fontlist-v3.11.0.json
+2026-11-17 18:33:50,653 - matplotlib - DEBUG - matplotlib data path: /home/coder/.local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-11-17 18:33:50,658 - matplotlib - DEBUG - CONFIGDIR=/home/coder/.config/matplotlib
+2026-11-17 18:33:50,659 - matplotlib - DEBUG - interactive is False
+2026-11-17 18:33:50,659 - matplotlib - DEBUG - platform is linux
+2026-11-17 18:33:50,684 - matplotlib - DEBUG - CACHEDIR=/home/coder/.cache/matplotlib
+2026-11-17 18:33:50,685 - matplotlib.font_manager - DEBUG - Using fontManager instance from /home/coder/.cache/matplotlib/fontlist-v3.11.0.json
+2026-11-17 18:34:04,339 - matplotlib - DEBUG - matplotlib data path: /home/coder/.local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-11-17 18:34:04,406 - matplotlib - DEBUG - CONFIGDIR=/home/coder/.config/matplotlib
+2026-11-17 18:34:04,439 - matplotlib - DEBUG - interactive is False
+2026-11-17 18:34:04,439 - matplotlib - DEBUG - platform is linux
+2026-11-17 18:34:04,548 - matplotlib - DEBUG - CACHEDIR=/home/coder/.cache/matplotlib
+2026-11-17 18:34:04,550 - matplotlib.font_manager - DEBUG - Using fontManager instance from /home/coder/.cache/matplotlib/fontlist-v3.11.0.json
+2026-11-17 18:34:18,564 - matplotlib - DEBUG - matplotlib data path: /home/coder/.local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-11-17 18:34:18,568 - matplotlib - DEBUG - CONFIGDIR=/home/coder/.config/matplotlib
+2026-11-17 18:34:18,570 - matplotlib - DEBUG - interactive is False
+2026-11-17 18:34:18,570 - matplotlib - DEBUG - platform is linux
+2026-11-17 18:34:18,740 - matplotlib - DEBUG - CACHEDIR=/home/coder/.cache/matplotlib
+2026-11-17 18:34:18,741 - matplotlib.font_manager - DEBUG - Using fontManager instance from /home/coder/.cache/matplotlib/fontlist-v3.11.0.json
+2026-11-17 18:34:32,105 - matplotlib - DEBUG - matplotlib data path: /home/coder/.local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-11-17 18:34:32,110 - matplotlib - DEBUG - CONFIGDIR=/home/coder/.config/matplotlib
+2026-11-17 18:34:32,111 - matplotlib - DEBUG - interactive is False
+2026-11-17 18:34:32,111 - matplotlib - DEBUG - platform is linux
+2026-11-17 18:34:32,161 - matplotlib - DEBUG - CACHEDIR=/home/coder/.cache/matplotlib
+2026-11-17 18:34:32,162 - matplotlib.font_manager - DEBUG - Using fontManager instance from /home/coder/.cache/matplotlib/fontlist-v3.11.0.json
+2026-11-17 18:34:44,862 - matplotlib - DEBUG - matplotlib data path: /home/coder/.local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-11-17 18:34:44,867 - matplotlib - DEBUG - CONFIGDIR=/home/coder/.config/matplotlib
+2026-11-17 18:34:44,869 - matplotlib - DEBUG - interactive is False
+2026-11-17 18:34:44,869 - matplotlib - DEBUG - platform is linux
+2026-11-17 18:34:45,048 - matplotlib - DEBUG - CACHEDIR=/home/coder/.cache/matplotlib
+2026-11-17 18:34:45,049 - matplotlib.font_manager - DEBUG - Using fontManager instance from /home/coder/.cache/matplotlib/fontlist-v3.11.0.json
+2026-11-17 18:34:59,917 - matplotlib - DEBUG - matplotlib data path: /home/coder/.local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-11-17 18:34:59,922 - matplotlib - DEBUG - CONFIGDIR=/home/coder/.config/matplotlib
+2026-11-17 18:34:59,923 - matplotlib - DEBUG - interactive is False
+2026-11-17 18:34:59,923 - matplotlib - DEBUG - platform is linux
+2026-11-17 18:35:00,009 - matplotlib - DEBUG - CACHEDIR=/home/coder/.cache/matplotlib
+2026-11-17 18:35:00,010 - matplotlib.font_manager - DEBUG - Using fontManager instance from /home/coder/.cache/matplotlib/fontlist-v3.11.0.json
+2026-11-17 18:35:14,510 - matplotlib - DEBUG - matplotlib data path: /home/coder/.local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-11-17 18:35:14,515 - matplotlib - DEBUG - CONFIGDIR=/home/coder/.config/matplotlib
+2026-11-17 18:35:14,516 - matplotlib - DEBUG - interactive is False
+2026-11-17 18:35:14,516 - matplotlib - DEBUG - platform is linux
+2026-11-17 18:35:14,555 - matplotlib - DEBUG - CACHEDIR=/home/coder/.cache/matplotlib
+2026-11-17 18:35:14,556 - matplotlib.font_manager - DEBUG - Using fontManager instance from /home/coder/.cache/matplotlib/fontlist-v3.11.0.json
+  [Ticket #1] Clauses: 4000 (765.6 KB, Overlap=0) | One-Shot: 93.23% | Rewind-Retrain: 97.57% | FineTune: 97.43% | Winning Ticket Acc: 97.57% | Ensemble(1..1): 97.57%
+  [Ticket #2] Clauses: 4000 (765.6 KB, Overlap=0) | One-Shot: 94.43% | Rewind-Retrain: 97.19% | FineTune: 97.04% | Winning Ticket Acc: 97.04% | Ensemble(1..2): 97.68%
+  [Ticket #3] Clauses: 4000 (765.6 KB, Overlap=0) | One-Shot: 78.83% | Rewind-Retrain: 97.24% | FineTune: 97.13% | Winning Ticket Acc: 97.24% | Ensemble(1..3): 97.80%
+  [Ticket #4] Clauses: 4000 (765.6 KB, Overlap=0) | One-Shot: 20.49% | Rewind-Retrain: 97.03% | FineTune: 97.28% | Winning Ticket Acc: 97.28% | Ensemble(1..4): 97.83%
+
+=== Running Iterative Lottery-Ticket Loop (Schedule: [1.0, 0.8, 0.6, 0.4, 0.3, 0.2, 0.15, 0.1], Retrain=50 epochs) ===
+  [Round 0 | Stage 1 Lossless] Active: 19851/20000 (3799.6 KB) | Dense Acc: 97.79% -> Sanitized Acc: 97.79% (Renorm: 97.82%)
+  [Round 1 | Keep 80.0% (16000 cls, 3062.5 KB)] OneShot: 96.80% | Rewind(e_r): 97.83% | Rewind(0): 97.80% | FineTune: 97.93% | RandMask: 97.81% | Scratch: 97.70%

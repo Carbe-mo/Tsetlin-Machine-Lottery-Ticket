@@ -155,6 +155,14 @@ class PrunableTMClassifier(TMClassifier):
     # ------------------------------------------------------------------
     # Synchronization helpers for CPU / CUDA clause banks
     # ------------------------------------------------------------------
+    def _get_raw_clause_bank_array(self, k: int) -> np.ndarray:
+        cb = self.clause_banks[k]
+        if hasattr(cb, "clause_bank"):
+            return cb.clause_bank
+        if hasattr(cb, "host") and hasattr(cb.host, "clause_bank"):
+            return cb.host.clause_bank
+        raise AttributeError(f"Cannot locate clause_bank array on {type(cb).__name__}")
+
     def _sync_from_device(self, k: int) -> None:
         cb = self.clause_banks[k]
         if hasattr(cb, "synchronize_clause_bank"):
@@ -162,7 +170,9 @@ class PrunableTMClassifier(TMClassifier):
 
     def _sync_to_device(self, k: int) -> None:
         cb = self.clause_banks[k]
-        if hasattr(cb, "clause_bank_gpu") and cb.clause_bank_gpu is not None:
+        if hasattr(cb, "device") and cb.device is not None and hasattr(cb, "host"):
+            cb.device.upload_clause_bank(cb.host.clause_bank)
+        elif hasattr(cb, "clause_bank_gpu") and cb.clause_bank_gpu is not None:
             import pycuda.driver as cuda
             cuda.memcpy_htod(cb.clause_bank_gpu, cb.clause_bank)
             cb.clause_bank_synchronized = True
@@ -179,13 +189,14 @@ class PrunableTMClassifier(TMClassifier):
         """
         self._sync_from_device(k)
         cb = self.clause_banks[k]
+        raw_bank = self._get_raw_clause_bank_array(k)
         N = self.number_of_clauses
         chunks = cb.number_of_ta_chunks
         bits = cb.number_of_state_bits_ta
         n_lit = cb.number_of_literals
 
         # MSB plane (index bits - 1) holds the action bit (1 = Include, 0 = Exclude)
-        bank_3d = cb.clause_bank.reshape((N, chunks, bits))
+        bank_3d = raw_bank.reshape((N, chunks, bits))
         msb_chunks = np.ascontiguousarray(bank_3d[:, :, bits - 1], dtype=np.uint32)
 
         # Unpack 32-bit unsigned ints (little-endian bit order within each uint32)
@@ -293,7 +304,8 @@ class PrunableTMClassifier(TMClassifier):
         for k in range(self.number_of_classes):
             self._sync_from_device(k)
             cb = self.clause_banks[k]
-            cb_states[k] = cb.clause_bank.copy()
+            raw_bank = self._get_raw_clause_bank_array(k)
+            cb_states[k] = raw_bank.copy()
             cb_ind_states[k] = (
                 cb.clause_bank_ind.copy()
                 if hasattr(cb, "clause_bank_ind")
@@ -323,7 +335,8 @@ class PrunableTMClassifier(TMClassifier):
         """
         for k in range(self.number_of_classes):
             cb = self.clause_banks[k]
-            cb.clause_bank[:] = checkpoint.clause_banks_state[k]
+            raw_bank = self._get_raw_clause_bank_array(k)
+            raw_bank[:] = checkpoint.clause_banks_state[k]
             if (
                 hasattr(cb, "clause_bank_ind")
                 and checkpoint.clause_banks_ind_state[k].size > 0
@@ -359,6 +372,7 @@ class PrunableTMClassifier(TMClassifier):
 
         for k in range(self.number_of_classes):
             cb = self.clause_banks[k]
+            raw_bank = self._get_raw_clause_bank_array(k)
             chunks = cb.number_of_ta_chunks
             bits = cb.number_of_state_bits_ta
             n_lit = cb.number_of_literals
@@ -381,7 +395,7 @@ class PrunableTMClassifier(TMClassifier):
                 jitter = rng.randint(0, 2, size=(N, chunks), dtype=np.uint32)
                 bank_3d[:, :, 0] ^= jitter
 
-            cb.clause_bank[:] = bank_3d.reshape(-1)
+            raw_bank[:] = bank_3d.reshape(-1)
             self._sync_to_device(k)
 
             # Reset weights to +1 (first half) and -1 (second half), masked by retention_mask

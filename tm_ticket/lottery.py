@@ -50,6 +50,7 @@ def train_dense_tm_with_checkpoints(
     rewind_epoch: int = 1,
     platform: str = "CPU",
     weighted_clauses: bool = True,
+    max_included_literals: Optional[int] = None,
     seed: int = 42,
     verbose: bool = True,
 ) -> Tuple[PrunableTMClassifier, Dict[str, TMCheckpoint], List[Dict[str, Any]]]:
@@ -66,6 +67,7 @@ def train_dense_tm_with_checkpoints(
         s=s,
         platform=platform,
         weighted_clauses=weighted_clauses,
+        max_included_literals=max_included_literals,
         seed=seed,
     )
     tm.init(X_train, Y_train)

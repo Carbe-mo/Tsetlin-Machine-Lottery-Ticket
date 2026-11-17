@@ -239,7 +239,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dataset", type=str, default="mnist", choices=["mnist", "fmnist", "kmnist"])
     parser.add_argument("--clauses", type=int, default=None, help="Number of clauses per class (N)")
     parser.add_argument("--T", type=int, default=None, help="Voting threshold T")
-    parser.add_argument("--s", type=float, default=10.0, help="Specificity parameter s")
+    parser.add_argument("--s", type=float, default=5.0, help="Specificity parameter s (default: 5.0 from specificity sweep)")
+    parser.add_argument("--max-included-literals", type=int, default=None, help="Optional cap on included literals per clause (e.g. 32)")
     parser.add_argument("--epochs", type=int, default=None, help="Dense training epochs")
     parser.add_argument("--retrain-epochs", type=int, default=None, help="Retraining epochs per ticket")
     parser.add_argument("--rewind-epoch", type=int, default=1, help="Early rewind checkpoint epoch e_r")
@@ -281,8 +282,8 @@ def main() -> None:
     else:  # full (coder.uia.no server preset)
         clauses = args.clauses or 2000
         T = args.T or 1500
-        epochs = args.epochs or 25
-        retrain_epochs = args.retrain_epochs or 10
+        epochs = args.epochs or 50
+        retrain_epochs = args.retrain_epochs or 15
         train_samples = args.train_samples or 50000
         val_samples = args.val_samples or 10000
         test_samples = args.test_samples or 10000
@@ -327,6 +328,7 @@ def main() -> None:
         rewind_epoch=args.rewind_epoch,
         platform=args.platform,
         weighted_clauses=True,
+        max_included_literals=args.max_included_literals,
         seed=args.seed,
         verbose=True,
     )

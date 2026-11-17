@@ -1,0 +1,7 @@
+round,target_ratio,actual_retention_ratio,active_clauses,model_size_kb,mean_literal_length,oneshot_val_acc,oneshot_test_acc,oneshot_renorm_test_acc,rewind_early_test_acc,rewind_init_test_acc,finetune_test_acc,random_reinit_test_acc,random_mask_retrain_test_acc,scratch_small_test_acc,winning_ticket_test_acc
+0,1.0,0.781,3124,597.95,20.45,94.033,93.72,93.58,93.72,94.22,93.72,94.22,94.22,94.22,93.72
+1,0.7,0.7,2800,535.94,21.46,94.267,94.04,93.98,93.32,92.84,94.44,92.24,93.02,92.82,94.44
+2,0.5,0.5,2000,382.81,23.35,93.667,93.9,93.8,93.28,91.82,93.68,91.98,91.72,91.42,93.68
+3,0.3,0.3,1200,229.69,25.97,92.567,92.5,92.54,90.92,90.14,92.46,90.82,90.12,89.98,92.46
+4,0.2,0.2,800,153.12,27.53,90.967,91.5,91.54,88.98,89.08,91.56,89.18,87.62,87.28,91.56
+5,0.1,0.1,400,76.56,30.5,88.033,88.92,88.94,85.38,84.66,88.4,83.62,84.7,84.22,88.4

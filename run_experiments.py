@@ -17,8 +17,10 @@ Usage examples:
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ProcessPoolExecutor
 import csv
 import json
+import os
 from pathlib import Path
 import time
 from typing import Any, Dict, Tuple
@@ -28,6 +30,7 @@ from sklearn.model_selection import train_test_split
 from tmu.data import MNIST
 
 from tm_ticket.lottery import (
+    _init_worker_data,
     compare_optimization_methods,
     discover_multiple_disjoint_tickets,
     run_iterative_lottery_ticket,
@@ -250,6 +253,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--val-samples", type=int, default=None, help="Validation sample count")
     parser.add_argument("--test-samples", type=int, default=None, help="Test sample count")
     parser.add_argument("--platform", type=str, default="CPU", choices=["CPU", "CUDA", "GPU"])
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=None,
+        help="Number of parallel CPU worker processes for ticket retraining (default: up to 16 on multi-core servers)",
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--output-dir", type=str, default="results")
     return parser.parse_args()
@@ -279,16 +288,19 @@ def main() -> None:
         test_samples = args.test_samples or 10000
         schedule = [1.0, 0.75, 0.50, 0.35, 0.25, 0.15, 0.10]
         comp_budgets = [0.50, 0.30, 0.20, 0.10]
-    else:  # full (coder.uia.no server preset)
+    else:  # full (coder.uia.no server preset: 50 epochs dense + 50 epochs retrain per lottery ticket)
         clauses = args.clauses or 2000
         T = args.T or 1500
         epochs = args.epochs or 50
-        retrain_epochs = args.retrain_epochs or 15
+        retrain_epochs = args.retrain_epochs or 50
         train_samples = args.train_samples or 50000
         val_samples = args.val_samples or 10000
         test_samples = args.test_samples or 10000
         schedule = [1.0, 0.80, 0.60, 0.40, 0.30, 0.20, 0.15, 0.10]
         comp_budgets = [0.50, 0.30, 0.20, 0.10]
+
+    cpu_count = os.cpu_count() or 1
+    workers = args.workers if args.workers is not None else (16 if cpu_count >= 32 else 1)
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -297,7 +309,8 @@ def main() -> None:
     print(f"TM-Ticket Experiment Suite | Preset: {args.preset.upper()} | Dataset: {args.dataset.upper()}")
     print(
         f"Clauses/class: {clauses} (Total: {clauses*10}) | T={T} | s={args.s} | "
-        f"Epochs={epochs} (Rewind e_r={args.rewind_epoch}, Retrain={retrain_epochs}) | Platform={args.platform}"
+        f"Epochs={epochs} (Rewind e_r={args.rewind_epoch}, Retrain={retrain_epochs}) | "
+        f"Platform={args.platform} | Parallel Workers={workers}"
     )
     print("=" * 78)
 
@@ -310,7 +323,8 @@ def main() -> None:
         seed=args.seed,
     )
     print(
-        f"Loaded {args.dataset.upper()}: Train={X_train.shape}, Val={X_val.shape}, Test={X_test.shape}"
+        f"Loaded {args.dataset.upper()}: Train={X_train.shape}, Val={X_val.shape}, Test={X_test.shape}",
+        flush=True,
     )
 
     # 1. Train Dense TM & Save Checkpoints (Theta_0, Theta_{e_r}, Theta_final)
@@ -333,56 +347,73 @@ def main() -> None:
         verbose=True,
     )
 
-    # 2. Discover Multiple Mutually Disjoint Winning Tickets from One Trained TM
-    disjoint_res = discover_multiple_disjoint_tickets(
-        tm=tm,
-        checkpoints=checkpoints,
-        X_train=X_train,
-        Y_train=Y_train,
-        X_val=X_val,
-        Y_val=Y_val,
-        X_test=X_test,
-        Y_test=Y_test,
-        num_tickets=args.num_disjoint_tickets,
-        ticket_ratio=args.disjoint_ticket_ratio,
-        retrain_epochs=retrain_epochs,
-        min_literals=1,
-        scoring_method="mcs_hybrid",
-        verbose=True,
+    executor = (
+        ProcessPoolExecutor(
+            max_workers=workers,
+            initializer=_init_worker_data,
+            initargs=(X_train, Y_train, X_val, Y_val, X_test, Y_test),
+        )
+        if workers > 1
+        else None
     )
 
-    # 3. Run Full Iterative Lottery-Ticket Loop (IMP-TM Spectrum)
-    iterative_res = run_iterative_lottery_ticket(
-        tm=tm,
-        checkpoints=checkpoints,
-        X_train=X_train,
-        Y_train=Y_train,
-        X_val=X_val,
-        Y_val=Y_val,
-        X_test=X_test,
-        Y_test=Y_test,
-        retention_schedule=schedule,
-        retrain_epochs=retrain_epochs,
-        min_literals=1,
-        scoring_method="mcs_hybrid",
-        run_scratch_baselines=True,
-        verbose=True,
-    )
+    try:
+        # 2. Discover Multiple Mutually Disjoint Winning Tickets from One Trained TM
+        disjoint_res = discover_multiple_disjoint_tickets(
+            tm=tm,
+            checkpoints=checkpoints,
+            X_train=X_train,
+            Y_train=Y_train,
+            X_val=X_val,
+            Y_val=Y_val,
+            X_test=X_test,
+            Y_test=Y_test,
+            num_tickets=args.num_disjoint_tickets,
+            ticket_ratio=args.disjoint_ticket_ratio,
+            retrain_epochs=retrain_epochs,
+            min_literals=1,
+            scoring_method="mcs_hybrid",
+            executor=executor,
+            verbose=True,
+        )
 
-    # 4. Compare All Clause Optimization Techniques Head-to-Head
-    comparison_res = compare_optimization_methods(
-        tm=tm,
-        checkpoints=checkpoints,
-        X_train=X_train,
-        Y_train=Y_train,
-        X_val=X_val,
-        Y_val=Y_val,
-        X_test=X_test,
-        Y_test=Y_test,
-        budget_ratios=comp_budgets,
-        retrain_epochs=retrain_epochs,
-        verbose=True,
-    )
+        # 3. Run Full Iterative Lottery-Ticket Loop (IMP-TM Spectrum)
+        iterative_res = run_iterative_lottery_ticket(
+            tm=tm,
+            checkpoints=checkpoints,
+            X_train=X_train,
+            Y_train=Y_train,
+            X_val=X_val,
+            Y_val=Y_val,
+            X_test=X_test,
+            Y_test=Y_test,
+            retention_schedule=schedule,
+            retrain_epochs=retrain_epochs,
+            min_literals=1,
+            scoring_method="mcs_hybrid",
+            run_scratch_baselines=True,
+            executor=executor,
+            verbose=True,
+        )
+
+        # 4. Compare All Clause Optimization Techniques Head-to-Head
+        comparison_res = compare_optimization_methods(
+            tm=tm,
+            checkpoints=checkpoints,
+            X_train=X_train,
+            Y_train=Y_train,
+            X_val=X_val,
+            Y_val=Y_val,
+            X_test=X_test,
+            Y_test=Y_test,
+            budget_ratios=comp_budgets,
+            retrain_epochs=retrain_epochs,
+            executor=executor,
+            verbose=True,
+        )
+    finally:
+        if executor is not None:
+            executor.shutdown(wait=True)
 
     total_time = round(time.time() - t_start, 2)
 

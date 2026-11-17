@@ -254,8 +254,9 @@ def compute_clause_scores(
         tau = float(np.median(pos_margins)) if pos_margins.size > 0 else float(max(tm.T, 1))
         tau = max(tau, 1.0)
 
-    # Boundary focus weights omega(x) = exp(-max(mu(x), 0) / tau)
-    omega = np.exp(-np.maximum(margins, 0.0) / tau)  # (M,)
+    # Boundary focus weights omega(x) = 1.0 + exp(-max(mu(x), 0) / tau) in [1.0, 2.0]
+    # Keeps a 1.0 baseline credit for well-classified samples while upweighting boundary samples 2x
+    omega = 1.0 + np.exp(-np.maximum(margins, 0.0) / tau)  # (M,)
 
     mcs_scores = np.zeros((K, N), dtype=np.float64)
     disc_scores = np.zeros((K, N), dtype=np.float64)

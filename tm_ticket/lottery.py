@@ -16,11 +16,15 @@ Implements three core experimental engines on top of `tmu`:
      Discriminative Margin, Vote Impact, Firing-Rate Sanitization, Length+Firing
      Sanitization, Weight Magnitude, and Random Pruning) in both One-Shot and
      Lottery-Ticket Rewind+Retrain regimes.
+
+Supports multi-core parallel retraining (`num_workers > 1`) via `ProcessPoolExecutor`
+so 50-epoch retraining across dozens of tickets runs concurrently on multi-core servers.
 """
 
 from __future__ import annotations
 
-from dataclasses import asdict
+from concurrent.futures import ProcessPoolExecutor
+import os
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -35,6 +39,85 @@ from .sanitization import (
     select_ticket_mask,
 )
 
+# Worker-process global dataset cache to avoid re-serializing datasets per task
+_WORKER_DATA: Dict[str, np.ndarray] = {}
+
+
+def _init_worker_data(
+    X_train: np.ndarray,
+    Y_train: np.ndarray,
+    X_val: np.ndarray,
+    Y_val: np.ndarray,
+    X_test: np.ndarray,
+    Y_test: np.ndarray,
+) -> None:
+    global _WORKER_DATA
+    _WORKER_DATA = {
+        "X_train": X_train,
+        "Y_train": Y_train,
+        "X_val": X_val,
+        "Y_val": Y_val,
+        "X_test": X_test,
+        "Y_test": Y_test,
+    }
+
+
+def _parallel_retrain_worker(job: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Executes a single ticket retraining job in a CPU worker process.
+    """
+    X_train = _WORKER_DATA["X_train"]
+    Y_train = _WORKER_DATA["Y_train"]
+    X_val = _WORKER_DATA["X_val"]
+    Y_val = _WORKER_DATA["Y_val"]
+    X_test = _WORKER_DATA["X_test"]
+    Y_test = _WORKER_DATA["Y_test"]
+
+    tm = PrunableTMClassifier(
+        number_of_clauses=job["number_of_clauses"],
+        T=job["T"],
+        s=job["s"],
+        platform="CPU",
+        weighted_clauses=job["weighted_clauses"],
+        max_included_literals=job.get("max_included_literals"),
+        seed=job["seed"],
+    )
+    tm.init(X_train, Y_train)
+
+    mode = job["mode"]
+    mask = job.get("mask")
+    retrain_epochs = job["retrain_epochs"]
+
+    if mode == "checkpoint":
+        ckpt: TMCheckpoint = job["checkpoint"]
+        tm.rewind_to_checkpoint(
+            ckpt, retention_mask=mask, rescale_T_mode="proportional"
+        )
+    elif mode == "random_reinit":
+        tm.reinitialize_random_states(
+            retention_mask=mask,
+            seed=job["random_reinit_seed"],
+            init_include_prob=0.02,
+            rescale_T_mode="proportional",
+        )
+    elif mode == "scratch":
+        pass
+    else:
+        raise ValueError(f"Unknown worker job mode: {mode}")
+
+    best_val, best_test, best_scores = _retrain_and_eval(
+        tm, X_train, Y_train, X_val, Y_val, X_test, Y_test, retrain_epochs=retrain_epochs
+    )
+    final_ckpt = tm.get_checkpoint(epoch=retrain_epochs) if job.get("return_ckpt", False) else None
+
+    return {
+        "job_id": job["job_id"],
+        "best_val": best_val,
+        "best_test": best_test,
+        "best_scores": best_scores if job.get("return_scores", False) else None,
+        "final_ckpt": final_ckpt,
+    }
+
 
 def train_dense_tm_with_checkpoints(
     X_train: np.ndarray,
@@ -45,8 +128,8 @@ def train_dense_tm_with_checkpoints(
     Y_test: np.ndarray,
     number_of_clauses: int = 2000,
     T: int = 1500,
-    s: float = 10.0,
-    epochs: int = 10,
+    s: float = 5.0,
+    epochs: int = 50,
     rewind_epoch: int = 1,
     platform: str = "CPU",
     weighted_clauses: bool = True,
@@ -59,7 +142,7 @@ def train_dense_tm_with_checkpoints(
     capturing TA state & weight checkpoints at:
       - 'init' (epoch 0, before any training updates)
       - 'early' (after `rewind_epoch` epochs of training)
-      - 'final' (after `epochs` epochs of training)
+      - 'final' (after `epochs` epochs of training, plus best-validation checkpoint)
     """
     tm = PrunableTMClassifier(
         number_of_clauses=number_of_clauses,
@@ -76,6 +159,7 @@ def train_dense_tm_with_checkpoints(
     checkpoints["init"] = tm.get_checkpoint(epoch=0)
 
     history: List[Dict[str, Any]] = []
+    best_val_acc = -1.0
 
     for ep in range(1, epochs + 1):
         t0 = time.time()
@@ -96,15 +180,21 @@ def train_dense_tm_with_checkpoints(
             print(
                 f"  [Dense Train] Epoch {ep:02d}/{epochs:02d} | "
                 f"Val Acc: {val_acc:.2f}% | Test Acc: {test_acc:.2f}% | "
-                f"Time: {elapsed:.2f}s"
+                f"Time: {elapsed:.2f}s",
+                flush=True,
             )
 
         if ep == rewind_epoch:
             checkpoints["early"] = tm.get_checkpoint(epoch=ep)
 
+        if val_acc >= best_val_acc:
+            best_val_acc = val_acc
+            checkpoints["final"] = tm.get_checkpoint(epoch=ep)
+
     if "early" not in checkpoints:
         checkpoints["early"] = tm.get_checkpoint(epoch=epochs)
-    checkpoints["final"] = tm.get_checkpoint(epoch=epochs)
+    if "final" not in checkpoints:
+        checkpoints["final"] = tm.get_checkpoint(epoch=epochs)
 
     return tm, checkpoints, history
 
@@ -124,8 +214,8 @@ def _retrain_and_eval(
     tracking the best validation checkpoint, and returns (best_val_acc, test_acc_at_best_val, test_scores).
     """
     best_val = tm.evaluate_accuracy(X_val, Y_val)
-    best_test = tm.evaluate_accuracy(X_test, Y_test)
     best_scores = tm.compute_class_scores(X_test)
+    best_test = float(np.mean(np.argmax(best_scores, axis=1) == Y_test) * 100.0)
 
     for _ in range(retrain_epochs):
         tm.fit(X_train, Y_train)
@@ -149,9 +239,10 @@ def discover_multiple_disjoint_tickets(
     Y_test: np.ndarray,
     num_tickets: int = 4,
     ticket_ratio: float = 0.20,
-    retrain_epochs: int = 6,
+    retrain_epochs: int = 50,
     min_literals: int = 1,
     scoring_method: str = "mcs_hybrid",
+    executor: Optional[ProcessPoolExecutor] = None,
     verbose: bool = True,
 ) -> Dict[str, Any]:
     """
@@ -159,27 +250,19 @@ def discover_multiple_disjoint_tickets(
     trained Tsetlin Machine (Ticket #1, Ticket #2, ..., Ticket #M), where each ticket
     retains `ticket_ratio` (e.g. 20%) of the clauses per class and has ZERO overlap
     with any previously extracted ticket (T_a intersect T_b = empty set).
-
-    For each disjoint ticket, evaluates:
-      1. One-shot post-training accuracy (no retraining)
-      2. One-shot accuracy with C3 vote renormalization
-      3. Retrained accuracy after rewinding to early checkpoint Theta_{e_r}
-      4. Retrained accuracy after fine-tuning from Theta_{final}
-      5. Cumulative Ensemble Accuracy when combining Ticket #1 .. Ticket #m
     """
     if verbose:
         print(
             f"\n=== Discovering {num_tickets} Mutually Disjoint Winning Tickets "
-            f"(each {ticket_ratio*100:.0f}% of bank) ==="
+            f"(each {ticket_ratio*100:.0f}% of bank, Retrain={retrain_epochs} epochs) ===",
+            flush=True,
         )
 
-    # Restore final dense model first
     tm.rewind_to_checkpoint(checkpoints["final"], rescale_T_mode="fixed")
     dense_val_acc = tm.evaluate_accuracy(X_val, Y_val)
     dense_test_acc = tm.evaluate_accuracy(X_test, Y_test)
     dense_stats = compute_model_stats(tm)
 
-    # Stage 1 (Rule-based lossless) + Stage 2 (min_literals)
     stage1_mask, stage1_counts = rule_based_canonicalization(tm, merge_duplicates=True)
     if min_literals > 0:
         clean_mask, short_rem = length_based_filter(
@@ -188,10 +271,8 @@ def discover_multiple_disjoint_tickets(
     else:
         clean_mask, short_rem = stage1_mask, 0
 
-    # Save post-canonicalization final checkpoint so duplicate weight merges are preserved
     ckpt_clean_final = tm.get_checkpoint(epoch=checkpoints["final"].epoch)
 
-    # Precompute validation clause outputs and scores on the clean dense bank
     C_val = tm.evaluate_clause_outputs(X_val)
     all_scores = compute_clause_scores(
         tm, X_val, Y_val, base_mask=clean_mask, clause_outputs=C_val
@@ -200,11 +281,9 @@ def discover_multiple_disjoint_tickets(
 
     used_clauses_mask = np.zeros_like(clean_mask, dtype=np.int32)
     ticket_masks: List[np.ndarray] = []
-    tickets_report: List[Dict[str, Any]] = []
-    ensemble_test_scores = np.zeros((X_test.shape[0], tm.number_of_classes), dtype=np.float64)
+    oneshot_meta: List[Dict[str, Any]] = []
 
     for t_idx in range(1, num_tickets + 1):
-        # Extract the next best disjoint ticket from clauses not yet used
         t_mask = select_ticket_mask(
             scores=primary_scores,
             base_mask=clean_mask,
@@ -213,14 +292,11 @@ def discover_multiple_disjoint_tickets(
             prune_negative_scores=False,
             exclude_mask=used_clauses_mask,
         )
-
-        # Verify strict disjointness with all previous tickets
         overlap_with_previous = int(np.sum(t_mask & used_clauses_mask))
         assert overlap_with_previous == 0, "Disjoint ticket masks must have 0 overlap!"
         used_clauses_mask = used_clauses_mask | t_mask
         ticket_masks.append(t_mask)
 
-        # 1. Evaluate One-Shot (no retraining) from final trained states
         tm.rewind_to_checkpoint(
             ckpt_clean_final, retention_mask=t_mask, rescale_T_mode="proportional"
         )
@@ -230,23 +306,90 @@ def discover_multiple_disjoint_tickets(
         tm.update_vote_renormalization()
         oneshot_renorm_val = tm.evaluate_accuracy(X_val, Y_val, use_vote_scales=True)
         oneshot_renorm_test = tm.evaluate_accuracy(X_test, Y_test, use_vote_scales=True)
-
         t_stats = compute_model_stats(tm, mask=t_mask)
 
-        # 2. Evaluate Fine-Tuning from Theta_final
-        ft_val, ft_test, ft_scores = _retrain_and_eval(
-            tm, X_train, Y_train, X_val, Y_val, X_test, Y_test, retrain_epochs=retrain_epochs
+        oneshot_meta.append(
+            {
+                "t_idx": t_idx,
+                "t_mask": t_mask,
+                "t_stats": t_stats,
+                "overlap": overlap_with_previous,
+                "oneshot_val": oneshot_val,
+                "oneshot_test": oneshot_test,
+                "oneshot_renorm_val": oneshot_renorm_val,
+                "oneshot_renorm_test": oneshot_renorm_test,
+            }
         )
 
-        # 3. Evaluate LTH Rewind to Early Checkpoint (Theta_{e_r}) + Retrain
-        tm.rewind_to_checkpoint(
-            checkpoints["early"], retention_mask=t_mask, rescale_T_mode="proportional"
-        )
-        rw_val, rw_test, rw_scores = _retrain_and_eval(
-            tm, X_train, Y_train, X_val, Y_val, X_test, Y_test, retrain_epochs=retrain_epochs
-        )
+    # Dispatch all 2 * num_tickets retraining runs in parallel if executor is provided
+    retrain_results: Dict[str, Dict[str, Any]] = {}
+    if executor is not None:
+        jobs = []
+        for meta in oneshot_meta:
+            t_idx = meta["t_idx"]
+            t_mask = meta["t_mask"]
+            jobs.append(
+                {
+                    "job_id": f"ft_{t_idx}",
+                    "mode": "checkpoint",
+                    "checkpoint": ckpt_clean_final,
+                    "mask": t_mask,
+                    "number_of_clauses": tm.number_of_clauses,
+                    "T": tm.initial_T,
+                    "s": tm.s,
+                    "weighted_clauses": tm.weighted_clauses,
+                    "max_included_literals": tm.max_included_literals,
+                    "seed": tm.seed,
+                    "retrain_epochs": retrain_epochs,
+                    "return_scores": True,
+                }
+            )
+            jobs.append(
+                {
+                    "job_id": f"rw_{t_idx}",
+                    "mode": "checkpoint",
+                    "checkpoint": checkpoints["early"],
+                    "mask": t_mask,
+                    "number_of_clauses": tm.number_of_clauses,
+                    "T": tm.initial_T,
+                    "s": tm.s,
+                    "weighted_clauses": tm.weighted_clauses,
+                    "max_included_literals": tm.max_included_literals,
+                    "seed": tm.seed,
+                    "retrain_epochs": retrain_epochs,
+                    "return_scores": True,
+                }
+            )
+        for res in executor.map(_parallel_retrain_worker, jobs):
+            retrain_results[res["job_id"]] = res
 
-        # Pick best retrained ticket trajectory (Rewind-Early vs Fine-Tune by validation accuracy)
+    tickets_report: List[Dict[str, Any]] = []
+    ensemble_test_scores = np.zeros((X_test.shape[0], tm.number_of_classes), dtype=np.float64)
+
+    for meta in oneshot_meta:
+        t_idx = meta["t_idx"]
+        t_mask = meta["t_mask"]
+        t_stats = meta["t_stats"]
+
+        if executor is not None:
+            ft_res = retrain_results[f"ft_{t_idx}"]
+            rw_res = retrain_results[f"rw_{t_idx}"]
+            ft_val, ft_test, ft_scores = ft_res["best_val"], ft_res["best_test"], ft_res["best_scores"]
+            rw_val, rw_test, rw_scores = rw_res["best_val"], rw_res["best_test"], rw_res["best_scores"]
+        else:
+            tm.rewind_to_checkpoint(
+                ckpt_clean_final, retention_mask=t_mask, rescale_T_mode="proportional"
+            )
+            ft_val, ft_test, ft_scores = _retrain_and_eval(
+                tm, X_train, Y_train, X_val, Y_val, X_test, Y_test, retrain_epochs=retrain_epochs
+            )
+            tm.rewind_to_checkpoint(
+                checkpoints["early"], retention_mask=t_mask, rescale_T_mode="proportional"
+            )
+            rw_val, rw_test, rw_scores = _retrain_and_eval(
+                tm, X_train, Y_train, X_val, Y_val, X_test, Y_test, retrain_epochs=retrain_epochs
+            )
+
         if rw_val >= ft_val:
             best_ticket_val, best_ticket_test, best_ticket_scores = rw_val, rw_test, rw_scores
             best_regime = "rewind_early"
@@ -254,7 +397,6 @@ def discover_multiple_disjoint_tickets(
             best_ticket_val, best_ticket_test, best_ticket_scores = ft_val, ft_test, ft_scores
             best_regime = "finetune"
 
-        # Normalize ticket scores before adding to cumulative multi-ticket ensemble
         norm_factor = np.std(best_ticket_scores)
         if norm_factor > 0:
             ensemble_test_scores += best_ticket_scores / norm_factor
@@ -278,11 +420,11 @@ def discover_multiple_disjoint_tickets(
                 dense_stats.model_size_kb / max(t_stats.model_size_kb, 1e-6), 2
             ),
             "mean_literal_length": t_stats.mean_literal_length,
-            "overlap_with_previous_tickets": overlap_with_previous,
-            "oneshot_val_acc": round(oneshot_val, 3),
-            "oneshot_test_acc": round(oneshot_test, 3),
-            "oneshot_renorm_val_acc": round(oneshot_renorm_val, 3),
-            "oneshot_renorm_test_acc": round(oneshot_renorm_test, 3),
+            "overlap_with_previous_tickets": meta["overlap"],
+            "oneshot_val_acc": round(meta["oneshot_val"], 3),
+            "oneshot_test_acc": round(meta["oneshot_test"], 3),
+            "oneshot_renorm_val_acc": round(meta["oneshot_renorm_val"], 3),
+            "oneshot_renorm_test_acc": round(meta["oneshot_renorm_test"], 3),
             "rewind_early_val_acc": rw_val,
             "rewind_early_test_acc": rw_test,
             "finetune_val_acc": ft_val,
@@ -297,15 +439,15 @@ def discover_multiple_disjoint_tickets(
         if verbose:
             print(
                 f"  [{ticket_entry['ticket_id']}] Clauses: {t_stats.active_clauses} "
-                f"({t_stats.model_size_kb:.1f} KB, Overlap={overlap_with_previous}) | "
-                f"One-Shot: {oneshot_renorm_test:.2f}% | "
+                f"({t_stats.model_size_kb:.1f} KB, Overlap={meta['overlap']}) | "
+                f"One-Shot: {meta['oneshot_renorm_test']:.2f}% | "
                 f"Rewind-Retrain: {rw_test:.2f}% | "
                 f"FineTune: {ft_test:.2f}% | "
                 f"Winning Ticket Acc: {best_ticket_test:.2f}% | "
-                f"Ensemble(1..{t_idx}): {ensemble_test_acc:.2f}%"
+                f"Ensemble(1..{t_idx}): {ensemble_test_acc:.2f}%",
+                flush=True,
             )
 
-    # Compute pairwise Jaccard similarity matrix across all discovered tickets
     pairwise_jaccard = np.zeros((num_tickets, num_tickets), dtype=np.float64)
     for i in range(num_tickets):
         for j in range(num_tickets):
@@ -340,32 +482,25 @@ def run_iterative_lottery_ticket(
     X_test: np.ndarray,
     Y_test: np.ndarray,
     retention_schedule: Optional[List[float]] = None,
-    retrain_epochs: int = 5,
+    retrain_epochs: int = 50,
     min_literals: int = 1,
     scoring_method: str = "mcs_hybrid",
     run_scratch_baselines: bool = True,
+    executor: Optional[ProcessPoolExecutor] = None,
     verbose: bool = True,
 ) -> Dict[str, Any]:
     """
     Runs the full Iterative Lottery-Ticket Loop (IMP-TM) across a schedule of
-    clause retention ratios (e.g., [1.0, 0.75, 0.50, 0.35, 0.25, 0.15, 0.10]).
-
-    At each sparsity level, compares:
-      - One-Shot Sanitized TM (no retraining)
-      - One-Shot Sanitized TM + C3 Vote Renormalization
-      - Winning Ticket (Rewind to Theta_{e_r} + Retrain)
-      - Winning Ticket (Rewind to Theta_0 + Retrain)
-      - Fine-Tuned Ticket (Continue from Theta_{final} + Retrain)
-      - Random-State Reinit Ticket (Same winning mask, perturbed random TA states + Retrain)
-      - Random-Mask Ticket (Random clause subset rewound to Theta_{e_r} + Retrain)
-      - Scratch Small TM (Fresh TM with N_active clauses per class trained from scratch)
+    clause retention ratios (e.g., [1.0, 0.80, 0.60, 0.40, 0.30, 0.20, 0.15, 0.10]).
     """
     if retention_schedule is None:
         retention_schedule = [1.0, 0.75, 0.50, 0.35, 0.25, 0.15, 0.10]
 
     if verbose:
         print(
-            f"\n=== Running Iterative Lottery-Ticket Loop (Schedule: {retention_schedule}) ==="
+            f"\n=== Running Iterative Lottery-Ticket Loop "
+            f"(Schedule: {retention_schedule}, Retrain={retrain_epochs} epochs) ===",
+            flush=True,
         )
 
     tm.rewind_to_checkpoint(checkpoints["final"], rescale_T_mode="fixed")
@@ -383,25 +518,16 @@ def run_iterative_lottery_ticket(
         current_mask, short_rem = stage1_mask, 0
 
     ckpt_clean_final = tm.get_checkpoint(epoch=checkpoints["final"].epoch)
-    C_val_dense = tm.evaluate_clause_outputs(X_val)
-    dense_scores_dict = compute_clause_scores(
-        tm, X_val, Y_val, base_mask=current_mask, clause_outputs=C_val_dense
-    )
-
     rounds_report: List[Dict[str, Any]] = []
     rng = np.random.RandomState(777)
 
     for r_idx, ratio in enumerate(retention_schedule):
         if ratio >= 1.0:
-            # Round 0: Stage 1 + Stage 2 lossless/short-filtered bank without budget cut
-            ticket_mask = current_mask.copy()
-            # Also drop strictly negative MCS clauses (harmful clauses)
-            harmful = (dense_scores_dict["mcs"] < 0.0) & (ticket_mask == 1)
-            harmful_count = int(np.sum(harmful))
-            ticket_mask[harmful] = 0
+            # Round 0: Stage 1 Lossless Canonicalization
+            ticket_mask = stage1_mask.copy()
+            harmful_count = 0
         else:
             harmful_count = 0
-            # Score current surviving clauses and prune down to `ratio`
             C_val_curr = tm.evaluate_clause_outputs(X_val)
             scores_curr = compute_clause_scores(
                 tm, X_val, Y_val, base_mask=current_mask, clause_outputs=C_val_curr
@@ -411,11 +537,11 @@ def run_iterative_lottery_ticket(
                 base_mask=current_mask,
                 target_retention_ratio=ratio,
                 class_balanced=True,
-                prune_negative_scores=True,
+                prune_negative_scores=False,
             )
             current_mask = ticket_mask.copy()
 
-        # 1. One-Shot Evaluation from clean final checkpoint
+        # 1. One-Shot Evaluation
         tm.rewind_to_checkpoint(
             ckpt_clean_final, retention_mask=ticket_mask, rescale_T_mode="proportional"
         )
@@ -458,48 +584,13 @@ def run_iterative_lottery_ticket(
             rounds_report.append(round_entry)
             if verbose:
                 print(
-                    f"  [Round {r_idx} | Sanitized Full] Active: {stats.active_clauses}/{dense_stats.total_clauses} "
+                    f"  [Round {r_idx} | Stage 1 Lossless] Active: {stats.active_clauses}/{dense_stats.total_clauses} "
                     f"({stats.model_size_kb:.1f} KB) | Dense Acc: {dense_test_acc:.2f}% -> "
-                    f"Sanitized Acc: {oneshot_test:.2f}% (Renorm: {oneshot_renorm_test:.2f}%)"
+                    f"Sanitized Acc: {oneshot_test:.2f}% (Renorm: {oneshot_renorm_test:.2f}%)",
+                    flush=True,
                 )
             continue
 
-        # 2. Fine-Tuning from Theta_final
-        ft_val, ft_test, _ = _retrain_and_eval(
-            tm, X_train, Y_train, X_val, Y_val, X_test, Y_test, retrain_epochs=retrain_epochs
-        )
-        # Update checkpoint for next iterative pruning round from fine-tuned state
-        ckpt_after_ft = tm.get_checkpoint(epoch=checkpoints["final"].epoch + retrain_epochs)
-
-        # 3. Winning Ticket: Rewind to Early Checkpoint Theta_{e_r} + Retrain
-        tm.rewind_to_checkpoint(
-            checkpoints["early"], retention_mask=ticket_mask, rescale_T_mode="proportional"
-        )
-        rw_early_val, rw_early_test, _ = _retrain_and_eval(
-            tm, X_train, Y_train, X_val, Y_val, X_test, Y_test, retrain_epochs=retrain_epochs
-        )
-        ckpt_after_rw_early = tm.get_checkpoint(epoch=checkpoints["early"].epoch + retrain_epochs)
-
-        # 4. Winning Ticket: Rewind to Init Checkpoint Theta_0 + Retrain
-        tm.rewind_to_checkpoint(
-            checkpoints["init"], retention_mask=ticket_mask, rescale_T_mode="proportional"
-        )
-        rw_init_val, rw_init_test, _ = _retrain_and_eval(
-            tm, X_train, Y_train, X_val, Y_val, X_test, Y_test, retrain_epochs=retrain_epochs
-        )
-
-        # 5. Control A: Random State Re-Initialization (Same winning mask, perturbed TA states)
-        tm.reinitialize_random_states(
-            retention_mask=ticket_mask,
-            seed=1000 + r_idx,
-            init_include_prob=0.02,
-            rescale_T_mode="proportional",
-        )
-        rand_state_val, rand_state_test, _ = _retrain_and_eval(
-            tm, X_train, Y_train, X_val, Y_val, X_test, Y_test, retrain_epochs=retrain_epochs
-        )
-
-        # 6. Control B: Random Clause Mask rewound to Theta_{e_r} + Retrain
         rand_scores = rng.rand(tm.number_of_classes, tm.number_of_clauses)
         rand_mask = select_ticket_mask(
             scores=rand_scores,
@@ -507,51 +598,181 @@ def run_iterative_lottery_ticket(
             target_retention_ratio=ratio,
             class_balanced=True,
         )
-        tm.rewind_to_checkpoint(
-            checkpoints["early"], retention_mask=rand_mask, rescale_T_mode="proportional"
-        )
-        rand_mask_val, rand_mask_test, _ = _retrain_and_eval(
-            tm, X_train, Y_train, X_val, Y_val, X_test, Y_test, retrain_epochs=retrain_epochs
-        )
 
-        # 7. Control C: Small TM trained from scratch with N_small = active clauses per class
-        scratch_test = 0.0
-        if run_scratch_baselines:
-            n_small = max(4, int(round(ratio * tm.number_of_clauses)))
-            if n_small % 2 == 1:
-                n_small += 1
-            t_small = max(1, int(round(tm.initial_T * ratio)))
-            small_tm = PrunableTMClassifier(
-                number_of_clauses=n_small,
-                T=t_small,
-                s=tm.s,
-                platform=tm.platform,
-                weighted_clauses=tm.weighted_clauses,
-                seed=tm.seed,
-            )
-            small_tm.init(X_train, Y_train)
-            _, scratch_test, _ = _retrain_and_eval(
-                small_tm,
-                X_train,
-                Y_train,
-                X_val,
-                Y_val,
-                X_test,
-                Y_test,
-                retrain_epochs=retrain_epochs,
-            )
-            # Explicitly release CUDA contexts if small_tm used ClauseBankCuda
-            for k_cls in range(small_tm.number_of_classes):
-                cb_small = small_tm.clause_banks[k_cls]
-                if hasattr(cb_small, "device") and cb_small.device is not None:
-                    try:
-                        cb_small.device.cleanup()
-                    except Exception:
-                        pass
-                    cb_small.device = None
-            del small_tm
+        n_small = max(4, int(round(ratio * tm.number_of_clauses)))
+        if n_small % 2 == 1:
+            n_small += 1
+        t_small = max(1, int(round(tm.initial_T * ratio)))
 
-        # Advance `tm` state to the best ticket checkpoint for the next iterative pruning step
+        if executor is not None:
+            # Run all 6 retraining regimes for this round concurrently across CPU workers!
+            round_jobs = [
+                {
+                    "job_id": "finetune",
+                    "mode": "checkpoint",
+                    "checkpoint": ckpt_clean_final,
+                    "mask": ticket_mask,
+                    "number_of_clauses": tm.number_of_clauses,
+                    "T": tm.initial_T,
+                    "s": tm.s,
+                    "weighted_clauses": tm.weighted_clauses,
+                    "max_included_literals": tm.max_included_literals,
+                    "seed": tm.seed,
+                    "retrain_epochs": retrain_epochs,
+                    "return_ckpt": True,
+                },
+                {
+                    "job_id": "rewind_early",
+                    "mode": "checkpoint",
+                    "checkpoint": checkpoints["early"],
+                    "mask": ticket_mask,
+                    "number_of_clauses": tm.number_of_clauses,
+                    "T": tm.initial_T,
+                    "s": tm.s,
+                    "weighted_clauses": tm.weighted_clauses,
+                    "max_included_literals": tm.max_included_literals,
+                    "seed": tm.seed,
+                    "retrain_epochs": retrain_epochs,
+                    "return_ckpt": True,
+                },
+                {
+                    "job_id": "rewind_init",
+                    "mode": "checkpoint",
+                    "checkpoint": checkpoints["init"],
+                    "mask": ticket_mask,
+                    "number_of_clauses": tm.number_of_clauses,
+                    "T": tm.initial_T,
+                    "s": tm.s,
+                    "weighted_clauses": tm.weighted_clauses,
+                    "max_included_literals": tm.max_included_literals,
+                    "seed": tm.seed,
+                    "retrain_epochs": retrain_epochs,
+                },
+                {
+                    "job_id": "random_reinit",
+                    "mode": "random_reinit",
+                    "mask": ticket_mask,
+                    "random_reinit_seed": 1000 + r_idx,
+                    "number_of_clauses": tm.number_of_clauses,
+                    "T": tm.initial_T,
+                    "s": tm.s,
+                    "weighted_clauses": tm.weighted_clauses,
+                    "max_included_literals": tm.max_included_literals,
+                    "seed": tm.seed,
+                    "retrain_epochs": retrain_epochs,
+                },
+                {
+                    "job_id": "random_mask",
+                    "mode": "checkpoint",
+                    "checkpoint": checkpoints["early"],
+                    "mask": rand_mask,
+                    "number_of_clauses": tm.number_of_clauses,
+                    "T": tm.initial_T,
+                    "s": tm.s,
+                    "weighted_clauses": tm.weighted_clauses,
+                    "max_included_literals": tm.max_included_literals,
+                    "seed": tm.seed,
+                    "retrain_epochs": retrain_epochs,
+                },
+            ]
+            if run_scratch_baselines:
+                round_jobs.append(
+                    {
+                        "job_id": "scratch",
+                        "mode": "scratch",
+                        "number_of_clauses": n_small,
+                        "T": t_small,
+                        "s": tm.s,
+                        "weighted_clauses": tm.weighted_clauses,
+                        "max_included_literals": tm.max_included_literals,
+                        "seed": tm.seed,
+                        "retrain_epochs": retrain_epochs,
+                    }
+                )
+            res_map = {res["job_id"]: res for res in executor.map(_parallel_retrain_worker, round_jobs)}
+            ft_val, ft_test, ckpt_after_ft = (
+                res_map["finetune"]["best_val"],
+                res_map["finetune"]["best_test"],
+                res_map["finetune"]["final_ckpt"],
+            )
+            rw_early_val, rw_early_test, ckpt_after_rw_early = (
+                res_map["rewind_early"]["best_val"],
+                res_map["rewind_early"]["best_test"],
+                res_map["rewind_early"]["final_ckpt"],
+            )
+            rw_init_test = res_map["rewind_init"]["best_test"]
+            rand_state_test = res_map["random_reinit"]["best_test"]
+            rand_mask_test = res_map["random_mask"]["best_test"]
+            scratch_test = res_map["scratch"]["best_test"] if run_scratch_baselines else 0.0
+        else:
+            ft_val, ft_test, _ = _retrain_and_eval(
+                tm, X_train, Y_train, X_val, Y_val, X_test, Y_test, retrain_epochs=retrain_epochs
+            )
+            ckpt_after_ft = tm.get_checkpoint(epoch=checkpoints["final"].epoch + retrain_epochs)
+
+            tm.rewind_to_checkpoint(
+                checkpoints["early"], retention_mask=ticket_mask, rescale_T_mode="proportional"
+            )
+            rw_early_val, rw_early_test, _ = _retrain_and_eval(
+                tm, X_train, Y_train, X_val, Y_val, X_test, Y_test, retrain_epochs=retrain_epochs
+            )
+            ckpt_after_rw_early = tm.get_checkpoint(epoch=checkpoints["early"].epoch + retrain_epochs)
+
+            tm.rewind_to_checkpoint(
+                checkpoints["init"], retention_mask=ticket_mask, rescale_T_mode="proportional"
+            )
+            _, rw_init_test, _ = _retrain_and_eval(
+                tm, X_train, Y_train, X_val, Y_val, X_test, Y_test, retrain_epochs=retrain_epochs
+            )
+
+            tm.reinitialize_random_states(
+                retention_mask=ticket_mask,
+                seed=1000 + r_idx,
+                init_include_prob=0.02,
+                rescale_T_mode="proportional",
+            )
+            _, rand_state_test, _ = _retrain_and_eval(
+                tm, X_train, Y_train, X_val, Y_val, X_test, Y_test, retrain_epochs=retrain_epochs
+            )
+
+            tm.rewind_to_checkpoint(
+                checkpoints["early"], retention_mask=rand_mask, rescale_T_mode="proportional"
+            )
+            _, rand_mask_test, _ = _retrain_and_eval(
+                tm, X_train, Y_train, X_val, Y_val, X_test, Y_test, retrain_epochs=retrain_epochs
+            )
+
+            scratch_test = 0.0
+            if run_scratch_baselines:
+                small_tm = PrunableTMClassifier(
+                    number_of_clauses=n_small,
+                    T=t_small,
+                    s=tm.s,
+                    platform=tm.platform,
+                    weighted_clauses=tm.weighted_clauses,
+                    seed=tm.seed,
+                )
+                small_tm.init(X_train, Y_train)
+                _, scratch_test, _ = _retrain_and_eval(
+                    small_tm,
+                    X_train,
+                    Y_train,
+                    X_val,
+                    Y_val,
+                    X_test,
+                    Y_test,
+                    retrain_epochs=retrain_epochs,
+                )
+                for k_cls in range(small_tm.number_of_classes):
+                    cb_small = small_tm.clause_banks[k_cls]
+                    if hasattr(cb_small, "device") and cb_small.device is not None:
+                        try:
+                            cb_small.device.cleanup()
+                        except Exception:
+                            pass
+                        cb_small.device = None
+                del small_tm
+
         if rw_early_val >= ft_val:
             tm.rewind_to_checkpoint(
                 ckpt_after_rw_early, retention_mask=ticket_mask, rescale_T_mode="proportional"
@@ -593,7 +814,8 @@ def run_iterative_lottery_ticket(
                 f"Rewind(0): {rw_init_test:.2f}% | "
                 f"FineTune: {ft_test:.2f}% | "
                 f"RandMask: {rand_mask_test:.2f}% | "
-                f"Scratch: {scratch_test:.2f}%"
+                f"Scratch: {scratch_test:.2f}%",
+                flush=True,
             )
 
     return {
@@ -620,7 +842,8 @@ def compare_optimization_methods(
     X_test: np.ndarray,
     Y_test: np.ndarray,
     budget_ratios: Optional[List[float]] = None,
-    retrain_epochs: int = 4,
+    retrain_epochs: int = 50,
+    executor: Optional[ProcessPoolExecutor] = None,
     verbose: bool = True,
 ) -> Dict[str, Any]:
     """
@@ -633,7 +856,9 @@ def compare_optimization_methods(
 
     if verbose:
         print(
-            f"\n=== Comparing All Clause Optimization Techniques (Budgets: {budget_ratios}) ==="
+            f"\n=== Comparing All Clause Optimization Techniques "
+            f"(Budgets: {budget_ratios}, Retrain={retrain_epochs} epochs) ===",
+            flush=True,
         )
 
     tm.rewind_to_checkpoint(checkpoints["final"], rescale_T_mode="fixed")
@@ -652,31 +877,29 @@ def compare_optimization_methods(
     )
 
     methods_spec = [
-        ("TM-Ticket (MCS-Hybrid + C1 + C3)", scores_l1["mcs_hybrid"], mask_l1, True, True),
-        ("MCS-Boundary (Pure Margin Score)", scores_l1["mcs"], mask_l1, True, True),
-        ("Discriminative-Margin (w*[rho+ - rho-])", scores_l1["discriminative"], mask_l1, True, True),
-        ("Vote-Impact (|w|*rho)", scores_l1["vote_impact"], mask_l1, True, False),
-        ("Paper Stage 1+3 (Firing Rate, Global)", scores_l1["firing_rate"], mask_l1, False, False),
-        ("Paper Stage 1+2+3 (L_min=2 + Firing)", scores_l2["firing_rate"], mask_l2, False, False),
-        ("Weight-Magnitude (|w|)", scores_l1["weight_mag"], mask_l1, True, False),
-        ("Random-Pruning (Baseline)", scores_l1["random"], mask_l1, True, False),
+        ("TM-Ticket (MCS-Hybrid + C1 + C3)", scores_l1["mcs_hybrid"], mask_l1, True),
+        ("MCS-Boundary (Pure Margin Score)", scores_l1["mcs"], mask_l1, True),
+        ("Discriminative-Margin (w*[rho+ - rho-])", scores_l1["discriminative"], mask_l1, True),
+        ("Vote-Impact (|w|*rho)", scores_l1["vote_impact"], mask_l1, True),
+        ("Paper Stage 1+3 (Firing Rate, Global)", scores_l1["firing_rate"], mask_l1, False),
+        ("Paper Stage 1+2+3 (L_min=2 + Firing)", scores_l2["firing_rate"], mask_l2, False),
+        ("Weight-Magnitude (|w|)", scores_l1["weight_mag"], mask_l1, True),
+        ("Random-Pruning (Baseline)", scores_l1["random"], mask_l1, True),
     ]
 
-    comparison_results: List[Dict[str, Any]] = []
+    pending_entries: List[Dict[str, Any]] = []
+    parallel_jobs: List[Dict[str, Any]] = []
 
     for ratio in budget_ratios:
-        if verbose:
-            print(f"\n  --- Target Clause Budget: {ratio*100:.0f}% ---")
-        for method_name, score_arr, b_mask, balanced, prune_neg in methods_spec:
+        for m_idx, (method_name, score_arr, b_mask, balanced) in enumerate(methods_spec):
             mask = select_ticket_mask(
                 scores=score_arr,
                 base_mask=b_mask,
                 target_retention_ratio=ratio,
                 class_balanced=balanced,
-                prune_negative_scores=prune_neg,
+                prune_negative_scores=False,
             )
 
-            # One-Shot evaluation
             tm.rewind_to_checkpoint(
                 ckpt_clean_final, retention_mask=mask, rescale_T_mode="proportional"
             )
@@ -686,10 +909,57 @@ def compare_optimization_methods(
             best_os = os_renorm_test if balanced else os_test
 
             stats = compute_model_stats(tm, mask=mask)
+            job_id = f"comp_{ratio}_{m_idx}"
 
-            # Lottery-Ticket Rewind + Retrain evaluation
+            pending_entries.append(
+                {
+                    "job_id": job_id,
+                    "budget_ratio": ratio,
+                    "method": method_name,
+                    "mask": mask,
+                    "active_clauses": stats.active_clauses,
+                    "model_size_kb": stats.model_size_kb,
+                    "mean_literal_length": stats.mean_literal_length,
+                    "oneshot_raw_test_acc": round(os_test, 3),
+                    "oneshot_renorm_test_acc": round(os_renorm_test, 3),
+                    "oneshot_best_test_acc": round(best_os, 3),
+                }
+            )
+            parallel_jobs.append(
+                {
+                    "job_id": job_id,
+                    "mode": "checkpoint",
+                    "checkpoint": checkpoints["early"],
+                    "mask": mask,
+                    "number_of_clauses": tm.number_of_clauses,
+                    "T": tm.initial_T,
+                    "s": tm.s,
+                    "weighted_clauses": tm.weighted_clauses,
+                    "max_included_literals": tm.max_included_literals,
+                    "seed": tm.seed,
+                    "retrain_epochs": retrain_epochs,
+                }
+            )
+
+    res_map: Dict[str, Dict[str, Any]] = {}
+    if executor is not None:
+        for res in executor.map(_parallel_retrain_worker, parallel_jobs):
+            res_map[res["job_id"]] = res
+
+    comparison_results: List[Dict[str, Any]] = []
+    current_printed_ratio = None
+
+    for item in pending_entries:
+        ratio = item["budget_ratio"]
+        if verbose and ratio != current_printed_ratio:
+            print(f"\n  --- Target Clause Budget: {ratio*100:.0f}% ---", flush=True)
+            current_printed_ratio = ratio
+
+        if executor is not None:
+            lth_test = res_map[item["job_id"]]["best_test"]
+        else:
             tm.rewind_to_checkpoint(
-                checkpoints["early"], retention_mask=mask, rescale_T_mode="proportional"
+                checkpoints["early"], retention_mask=item["mask"], rescale_T_mode="proportional"
             )
             _, lth_test, _ = _retrain_and_eval(
                 tm,
@@ -702,23 +972,24 @@ def compare_optimization_methods(
                 retrain_epochs=retrain_epochs,
             )
 
-            entry = {
-                "budget_ratio": ratio,
-                "method": method_name,
-                "active_clauses": stats.active_clauses,
-                "model_size_kb": stats.model_size_kb,
-                "mean_literal_length": stats.mean_literal_length,
-                "oneshot_raw_test_acc": round(os_test, 3),
-                "oneshot_renorm_test_acc": round(os_renorm_test, 3),
-                "oneshot_best_test_acc": round(best_os, 3),
-                "lottery_ticket_retrain_test_acc": lth_test,
-            }
-            comparison_results.append(entry)
+        entry = {
+            "budget_ratio": ratio,
+            "method": item["method"],
+            "active_clauses": item["active_clauses"],
+            "model_size_kb": item["model_size_kb"],
+            "mean_literal_length": item["mean_literal_length"],
+            "oneshot_raw_test_acc": item["oneshot_raw_test_acc"],
+            "oneshot_renorm_test_acc": item["oneshot_renorm_test_acc"],
+            "oneshot_best_test_acc": item["oneshot_best_test_acc"],
+            "lottery_ticket_retrain_test_acc": lth_test,
+        }
+        comparison_results.append(entry)
 
-            if verbose:
-                print(
-                    f"    {method_name:<38} | Clauses: {stats.active_clauses:5d} | "
-                    f"One-Shot: {best_os:6.2f}% | LTH-Retrain: {lth_test:6.2f}%"
-                )
+        if verbose:
+            print(
+                f"    {entry['method']:<38} | Clauses: {entry['active_clauses']:5d} | "
+                f"One-Shot: {entry['oneshot_best_test_acc']:6.2f}% | LTH-Retrain: {lth_test:6.2f}%",
+                flush=True,
+            )
 
     return {"method_comparison": comparison_results}

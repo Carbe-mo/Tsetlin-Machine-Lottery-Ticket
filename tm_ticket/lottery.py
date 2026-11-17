@@ -540,6 +540,16 @@ def run_iterative_lottery_ticket(
                 Y_test,
                 retrain_epochs=retrain_epochs,
             )
+            # Explicitly release CUDA contexts if small_tm used ClauseBankCuda
+            for k_cls in range(small_tm.number_of_classes):
+                cb_small = small_tm.clause_banks[k_cls]
+                if hasattr(cb_small, "device") and cb_small.device is not None:
+                    try:
+                        cb_small.device.cleanup()
+                    except Exception:
+                        pass
+                    cb_small.device = None
+            del small_tm
 
         # Advance `tm` state to the best ticket checkpoint for the next iterative pruning step
         if rw_early_val >= ft_val:

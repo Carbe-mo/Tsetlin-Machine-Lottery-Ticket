@@ -171,7 +171,12 @@ class PrunableTMClassifier(TMClassifier):
     def _sync_to_device(self, k: int) -> None:
         cb = self.clause_banks[k]
         if hasattr(cb, "device") and cb.device is not None and hasattr(cb, "host"):
-            cb.device.upload_clause_bank(cb.host.clause_bank)
+            cb.device._ensure_context()
+            try:
+                cb.device.upload_clause_bank(cb.host.clause_bank)
+            finally:
+                if cb.device.cuda_ctx is not None:
+                    cb.device.cuda_ctx.pop()
         elif hasattr(cb, "clause_bank_gpu") and cb.clause_bank_gpu is not None:
             import pycuda.driver as cuda
             cuda.memcpy_htod(cb.clause_bank_gpu, cb.clause_bank)
